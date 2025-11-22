@@ -4,10 +4,15 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: python3.11
-  region: us-east-1
   stage: ${opt:stage, 'dev'}
-  memorySize: 256
-  timeout: 30
+  region: us-east-1
+  
+  # AWS Academy configuration
+  profile: default
+  
+  # Use the existing LabRole ARN for AWS Academy
+  iam:
+    role: arn:aws:iam::520247722169:role/LabRole
   
   # Variables de entorno globales para todas las funciones
   environment:
@@ -15,11 +20,6 @@ provider:
     ORDERS_TABLE: ${self:custom.ordersTableName}
     EVENT_BUS_NAME: ${self:custom.eventBusName}
     STAGE: ${self:provider.stage}
-  
-  # Permisos IAM - Usando LabRole de AWS Academy
-  # Nota: LabRole tiene permisos amplios, por lo que no necesitamos definir statements personalizados
-  iam:
-    role: arn:aws:iam::520247722169:role/LabRole
 
 # Plugins necesarios
 plugins:
