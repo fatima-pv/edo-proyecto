@@ -422,7 +422,7 @@ resources:
 
     EdoOrderWorkflowArn:
       Description: "ARN del Step Function"
-      Value: !Ref EdoOrderWorkflow
+      Value: !Sub 'arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:EdoOrderWorkflow-${self:provider.stage}'
       Export:
         Name: ${self:service}-${self:provider.stage}-StateMachineArn
 
