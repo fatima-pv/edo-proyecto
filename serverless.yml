@@ -14,7 +14,6 @@ provider:
     USERS_TABLE: ${self:custom.usersTableName}
     ORDERS_TABLE: ${self:custom.ordersTableName}
     EVENT_BUS_NAME: ${self:custom.eventBusName}
-    STATE_MACHINE_ARN: ${self:resources.Outputs.EdoOrderWorkflowArn.Value}
     STAGE: ${self:provider.stage}
   
   # Permisos IAM - Usando LabRole de AWS Academy
@@ -121,7 +120,7 @@ functions:
     handler: src.handlers.notifications.notify_staff
     events:
       - eventBridge:
-          eventBus: !GetAtt EdoOrderBus.Arn
+          eventBus: ${self:custom.eventBusName}
           pattern:
             source:
               - edo.orders
