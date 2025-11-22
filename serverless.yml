@@ -134,6 +134,7 @@ stepFunctions:
   stateMachines:
     EdoOrderWorkflow:
       name: EdoOrderWorkflow-${self:provider.stage}
+      role: arn:aws:iam::520247722169:role/LabRole
       definition:
         Comment: "Flujo de trabajo para procesar pedidos en Edo Sushi Bar (Cocina -> Empaquetado -> Delivery)"
         StartAt: ReceiveOrder
