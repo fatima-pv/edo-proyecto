@@ -17,39 +17,10 @@ provider:
     STATE_MACHINE_ARN: ${self:resources.Outputs.EdoOrderWorkflowArn.Value}
     STAGE: ${self:provider.stage}
   
-  # Permisos IAM globales para todas las funciones Lambda
+  # Permisos IAM - Usando LabRole de AWS Academy
+  # Nota: LabRole tiene permisos amplios, por lo que no necesitamos definir statements personalizados
   iam:
     role: arn:aws:iam::520247722169:role/LabRole
-    
-      statements:
-        # Permisos para DynamoDB
-        - Effect: Allow
-          Action:
-            - dynamodb:GetItem
-            - dynamodb:PutItem
-            - dynamodb:UpdateItem
-            - dynamodb:Query
-            - dynamodb:Scan
-          Resource:
-            - !GetAtt EdoUsersTable.Arn
-            - !GetAtt EdoOrdersTable.Arn
-            - !Sub "${EdoOrdersTable.Arn}/index/*"
-        
-        # Permisos para Step Functions
-        - Effect: Allow
-          Action:
-            - states:StartExecution
-            - states:SendTaskSuccess
-            - states:SendTaskFailure
-          Resource:
-            - !Ref EdoOrderWorkflow
-        
-        # Permisos para EventBridge
-        - Effect: Allow
-          Action:
-            - events:PutEvents
-          Resource:
-            - !GetAtt EdoOrderBus.Arn
 
 # Plugins necesarios
 plugins:
