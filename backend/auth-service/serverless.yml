@@ -1,0 +1,35 @@
+service: edo-auth-service
+
+
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+  environment:
+    USERS_TABLE: EdoUsersTable
+  iam:
+    role: arn:aws:iam::520247722169:role/LabRole
+
+functions:
+  authLogin:
+    handler: handler.auth_login
+    events:
+      - http:
+          path: auth/login
+          method: post
+          cors: true
+
+resources:
+  Resources:
+    EdoUsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: EdoUsersTable
+        AttributeDefinitions:
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: email
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
