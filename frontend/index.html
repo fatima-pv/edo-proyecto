@@ -776,37 +776,8 @@
       <input type="hidden" id="modal-product-id">
       <input type="hidden" id="modal-product-price">
 
-      <div class="option-group">
-        <label class="option-label">Cantidad de Cortes</label>
-        <label class="radio-option">
-          <input type="radio" name="modal-cuts" value="5" checked onchange="updateModalPrice()"> 5 Cortes (Precio Base)
-        </label>
-        <label class="radio-option">
-          <input type="radio" name="modal-cuts" value="10" onchange="updateModalPrice()"> 10 Cortes (x1.8)
-        </label>
-      </div>
-
-      <div class="option-group">
-        <label class="option-label">Relleno</label>
-        <label class="radio-option">
-          <input type="radio" name="modal-filling" value="Langostino" checked> Langostino
-        </label>
-        <label class="radio-option">
-          <input type="radio" name="modal-filling" value="Pescado del día"> Pescado del día
-        </label>
-      </div>
-
-      <div class="option-group">
-        <label class="option-label">Salsas Extra (+ S/. 5.00)</label>
-        <label class="radio-option">
-          <input type="checkbox" class="modal-sauce" value="Acevichada" onchange="updateModalPrice()"> Acevichada
-        </label>
-        <label class="radio-option">
-          <input type="checkbox" class="modal-sauce" value="Tare" onchange="updateModalPrice()"> Tare
-        </label>
-        <label class="radio-option">
-          <input type="checkbox" class="modal-sauce" value="Shoyu" onchange="updateModalPrice()"> Shoyu
-        </label>
+      <div class="option-group-container">
+        <!-- Dynamic Content Injected Here -->
       </div>
 
       <div
@@ -958,13 +929,106 @@
       document.getElementById('modal-product-id').value = currentProduct.id;
       document.getElementById('modal-product-price').value = currentProduct.price;
 
-      // Reset form
-      document.querySelector('input[name="modal-cuts"][value="5"]').checked = true;
-      document.querySelector('input[name="modal-filling"][value="Langostino"]').checked = true;
-      document.querySelectorAll('.modal-sauce').forEach(c => c.checked = false);
+      const contentDiv = document.querySelector('.modal-content .option-group-container');
+
+      // Check if it's a Combo/Package
+      if (currentProduct.category === 'Paquetes' || currentProduct.category === 'Promociones') {
+        renderComboOptions(contentDiv);
+      } else {
+        renderStandardOptions(contentDiv);
+      }
 
       updateModalPrice();
       document.getElementById('product-modal').style.display = 'flex';
+    }
+
+    function renderStandardOptions(container) {
+      container.innerHTML = `
+            <div class="option-group">
+                <label class="option-label">Cantidad de Cortes</label>
+                <label class="radio-option">
+                  <input type="radio" name="modal-cuts" value="5" checked onchange="updateModalPrice()"> 5 Cortes (S./25)
+                </label>
+                <label class="radio-option">
+                  <input type="radio" name="modal-cuts" value="10" onchange="updateModalPrice()"> 10 Cortes (x1.8)
+                </label>
+            </div>
+
+            <div class="option-group">
+                <label class="option-label">Relleno</label>
+                <label class="radio-option">
+                  <input type="radio" name="modal-filling" value="Langostino" checked> Langostino
+                </label>
+                <label class="radio-option">
+                  <input type="radio" name="modal-filling" value="Pescado del día"> Pescado del día
+                </label>
+            </div>
+
+            <div class="option-group">
+                <label class="option-label">Salsas Extra (+ S/. 5.00)</label>
+                <label class="radio-option">
+                  <input type="checkbox" class="modal-sauce" value="Acevichada" onchange="updateModalPrice()"> Acevichada
+                </label>
+                <label class="radio-option">
+                  <input type="checkbox" class="modal-sauce" value="Tare" onchange="updateModalPrice()"> Tare
+                </label>
+                <label class="radio-option">
+                  <input type="checkbox" class="modal-sauce" value="Shoyu" onchange="updateModalPrice()"> Shoyu
+                </label>
+            </div>
+        `;
+    }
+
+    // Mock Options for Combos (In a real app, this would come from the DB config)
+    const COMBO_FLAVORS = ["Acevichado", "California", "Furai", "Shogun", "Samurai", "Parrillero", "Lau", "Ninja"];
+
+    function renderComboOptions(container) {
+      // Use maxSelections from backend or default to 4
+      const maxSelection = currentProduct.maxSelections || 4;
+
+      container.innerHTML = `
+            <div class="option-group">
+                <label class="option-label" style="display:flex; justify-content:space-between;">
+                    <span>Escoge ${maxSelection} variedades de makis</span>
+                    <span id="combo-counter" style="color:var(--accent-color); font-weight:bold;">0/${maxSelection}</span>
+                </label>
+                <div id="combo-options-list" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    ${COMBO_FLAVORS.map(flavor => `
+                        <div class="combo-item" style="background:#2a2a2a; padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.9rem;">${flavor}</span>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <button onclick="updateComboCount('${flavor}', -1, ${maxSelection})" style="background:#444; border:none; color:#fff; width:24px; height:24px; border-radius:50%; cursor:pointer;">-</button>
+                                <span id="count-${flavor}" class="flavor-count" data-flavor="${flavor}">0</span>
+                                <button onclick="updateComboCount('${flavor}', 1, ${maxSelection})" style="background:var(--accent-color); border:none; color:#000; width:24px; height:24px; border-radius:50%; cursor:pointer; font-weight:bold;">+</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div id="combo-error" style="color:var(--danger-color); font-size:0.8rem; margin-top:10px; display:none;">Debes seleccionar exactamente ${maxSelection} variedades.</div>
+            </div>
+        `;
+    }
+
+    function updateComboCount(flavor, change, max) {
+      const countSpan = document.getElementById(`count-${flavor}`);
+      let current = parseInt(countSpan.textContent);
+
+      // Calculate total selected
+      let totalSelected = 0;
+      document.querySelectorAll('.flavor-count').forEach(el => totalSelected += parseInt(el.textContent));
+
+      if (change > 0 && totalSelected >= max) return; // Limit reached
+      if (change < 0 && current <= 0) return; // Cannot go below 0
+
+      current += change;
+      countSpan.textContent = current;
+
+      // Update total counter
+      totalSelected += change;
+      document.getElementById('combo-counter').textContent = `${totalSelected}/${max}`;
+
+      // Hide error if valid
+      if (totalSelected === max) document.getElementById('combo-error').style.display = 'none';
     }
 
     function closeModal() {
@@ -975,29 +1039,60 @@
       if (!currentProduct) return;
       let price = parseFloat(currentProduct.price);
 
-      const cuts = document.querySelector('input[name="modal-cuts"]:checked').value;
-      if (cuts === "10") price *= 1.8;
+      // Only apply standard logic if NOT a combo
+      if (currentProduct.category !== 'Paquetes' && currentProduct.category !== 'Promociones') {
+        const cuts = document.querySelector('input[name="modal-cuts"]:checked');
+        if (cuts && cuts.value === "10") price *= 1.8;
 
-      const sauces = document.querySelectorAll('.modal-sauce:checked').length;
-      price += (sauces * 5);
+        const sauces = document.querySelectorAll('.modal-sauce:checked').length;
+        price += (sauces * 5);
+      }
 
       document.getElementById('modal-total').textContent = price.toFixed(2);
     }
 
     function confirmAddToCart() {
-      const cuts = document.querySelector('input[name="modal-cuts"]:checked').value;
-      const filling = document.querySelector('input[name="modal-filling"]:checked').value;
-      const sauces = Array.from(document.querySelectorAll('.modal-sauce:checked')).map(c => c.value);
-      const finalPrice = parseFloat(document.getElementById('modal-total').textContent);
-
-      cart.push({
+      let cartItem = {
         id: Date.now(),
         product: currentProduct,
-        cuts,
-        filling,
-        sauces,
-        price: finalPrice
-      });
+        price: parseFloat(document.getElementById('modal-total').textContent)
+      };
+
+      if (currentProduct.category === 'Paquetes' || currentProduct.category === 'Promociones') {
+        // Combo Logic
+        const max = currentProduct.maxSelections || 4; // Use dynamic limit
+        let totalSelected = 0;
+        let selectedFlavors = [];
+
+        document.querySelectorAll('.flavor-count').forEach(el => {
+          const count = parseInt(el.textContent);
+          if (count > 0) {
+            totalSelected += count;
+            selectedFlavors.push(`${count}x ${el.dataset.flavor}`);
+          }
+        });
+
+        if (totalSelected !== max) {
+          document.getElementById('combo-error').style.display = 'block';
+          return;
+        }
+
+        cartItem.cuts = "Pack";
+        cartItem.filling = "Variado";
+        cartItem.sauces = selectedFlavors; // We reuse 'sauces' field to store the flavors list for display
+
+      } else {
+        // Standard Logic
+        const cuts = document.querySelector('input[name="modal-cuts"]:checked').value;
+        const filling = document.querySelector('input[name="modal-filling"]:checked').value;
+        const sauces = Array.from(document.querySelectorAll('.modal-sauce:checked')).map(c => c.value);
+
+        cartItem.cuts = cuts;
+        cartItem.filling = filling;
+        cartItem.sauces = sauces;
+      }
+
+      cart.push(cartItem);
 
       closeModal();
       updateCartUI();

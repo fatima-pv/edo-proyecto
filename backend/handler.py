@@ -40,7 +40,8 @@ def createProduct(event, context):
             'price': Decimal(str(data['price'])), # Store as Decimal
             'description': data.get('description', ''),
             'category': data.get('category', 'General'), # Default to 'General'
-            'imageUrl': data.get('imageUrl', '') # Optional image URL
+            'imageUrl': data.get('imageUrl', ''), # Optional image URL
+            'maxSelections': int(data.get('maxSelections', 4)) # Default to 4 for combos
         }
         
         products_table.put_item(Item=item)
