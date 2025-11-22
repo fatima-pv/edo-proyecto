@@ -29,7 +29,7 @@ plugins:
 custom:
   usersTableName: ${self:service}-users-${self:provider.stage}
   ordersTableName: ${self:service}-orders-${self:provider.stage}
-  eventBusName: EdoOrderBus-${self:provider.stage}
+  eventBusName: default  # Usando EventBus por defecto (AWS Academy no permite crear custom buses)
 
 # Definición de las funciones Lambda
 functions:
@@ -370,26 +370,23 @@ resources:
             Value: EdoSushiBar
 
     # ================================
-    # EventBridge: EdoOrderBus
+    # EventBridge: USANDO DEFAULT BUS
     # ================================
-    # Event Bus personalizado para arquitectura EDA
-    # Recibe eventos de cambios de estado de pedidos
-    EdoOrderBus:
-      Type: AWS::Events::EventBus
-      Properties:
-        Name: ${self:custom.eventBusName}
-
-    # ================================
-    # EventBridge: Archive (Opcional)
-    # ================================
-    # Archivo de eventos para auditoría y replay
-    EdoOrderBusArchive:
-      Type: AWS::Events::Archive
-      Properties:
-        ArchiveName: EdoOrderBusArchive-${self:provider.stage}
-        SourceArn: !GetAtt EdoOrderBus.Arn
-        RetentionDays: 30
-        Description: "Archivo de eventos de pedidos para auditoría"
+    # AWS Academy no permite crear EventBus personalizados
+    # Usando el bus "default" en su lugar
+    # 
+    # EdoOrderBus:
+    #   Type: AWS::Events::EventBus
+    #   Properties:
+    #     Name: ${self:custom.eventBusName}
+    #
+    # EdoOrderBusArchive:
+    #   Type: AWS::Events::Archive
+    #   Properties:
+    #     ArchiveName: EdoOrderBusArchive-${self:provider.stage}
+    #     SourceArn: !GetAtt EdoOrderBus.Arn
+    #     RetentionDays: 30
+    #     Description: "Archivo de eventos de pedidos para auditoría"
 
   # ================================
   # OUTPUTS
@@ -408,15 +405,16 @@ resources:
       Export:
         Name: ${self:service}-${self:provider.stage}-OrdersTableName
 
+
     EventBusName:
-      Description: "Nombre del Event Bus"
-      Value: !Ref EdoOrderBus
+      Description: "Nombre del Event Bus (usando default)"
+      Value: default
       Export:
         Name: ${self:service}-${self:provider.stage}-EventBusName
 
     EventBusArn:
-      Description: "ARN del Event Bus"
-      Value: !GetAtt EdoOrderBus.Arn
+      Description: "ARN del Event Bus (default)"
+      Value: !Sub 'arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/default'
       Export:
         Name: ${self:service}-${self:provider.stage}-EventBusArn
 
