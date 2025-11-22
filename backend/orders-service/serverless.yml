@@ -1,0 +1,30 @@
+service: edo-orders-service
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+  memorySize: 256
+  timeout: 20
+  iam:
+    role: arn:aws:iam::076456812464:role/LabRole
+  environment:
+    ORDERS_TABLE: EdoOrdersTable
+
+functions:
+  createOrder:
+    handler: handler.createOrder
+    events:
+      - http:
+          path: orders
+          method: post
+          cors: true
+
+  listOrders:
+    handler: handler.listOrders
+    events:
+      - http:
+          path: orders
+          method: get
+          cors: true
+
