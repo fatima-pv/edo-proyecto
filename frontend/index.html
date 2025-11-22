@@ -1,208 +1,1126 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edo Sushi Bar - MVP Demo</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            height: 100vh;
-        }
-        .container {
-            display: flex;
-            width: 90%;
-            max-width: 1000px;
-            background: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .section {
-            flex: 1;
-            padding: 30px;
-        }
-        .left {
-            border-right: 1px solid #eee;
-        }
-        h2 {
-            color: #333;
-            margin-top: 0;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #666;
-        }
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #ff4500;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.3s;
-        }
-        button:hover {
-            background-color: #e03e00;
-        }
-        ul {
-            list-style: none;
-            padding: 0;
-            margin-top: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        li {
-            background: #f9f9f9;
-            border-bottom: 1px solid #eee;
-            padding: 10px;
-            margin-bottom: 5px;
-            border-radius: 4px;
-        }
-        li strong {
-            color: #333;
-        }
-        .status {
-            font-size: 0.8em;
-            color: #888;
-            float: right;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edo Sushi Bar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #121212;
+      --sidebar-bg: #1a1a1a;
+      --card-bg: #ffffff;
+      --accent-color: #f4c542;
+      --text-primary: #ffffff;
+      --text-secondary: #b0b0b0;
+      --text-dark: #333333;
+      --danger-color: #ff4d4d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* --- Sidebar (Categories) --- */
+    .sidebar {
+      width: 260px;
+      background-color: var(--sidebar-bg);
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #333;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 50px;
+      cursor: pointer;
+    }
+
+    .logo h1 {
+      color: var(--accent-color);
+      font-size: 2.2rem;
+      margin: 0;
+      letter-spacing: 2px;
+    }
+
+    .logo span {
+      font-size: 0.8rem;
+      color: #888;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .nav-menu {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      flex-grow: 1;
+    }
+
+    .nav-item {
+      margin-bottom: 10px;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 12px 15px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      border-radius: 8px;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+      cursor: pointer;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      background-color: rgba(244, 197, 66, 0.1);
+      color: var(--accent-color);
+      padding-left: 20px;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 20px;
+      border-top: 1px solid #333;
+    }
+
+    .btn-kitchen {
+      width: 100%;
+      background: #333;
+      color: #aaa;
+      border: 1px solid #444;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-kitchen:hover {
+      background: #444;
+      color: #fff;
+    }
+
+    /* --- Main Content --- */
+    .main-content {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      position: relative;
+      scroll-behavior: smooth;
+    }
+
+    .header {
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(to bottom, rgba(18, 18, 18, 0.95), transparent);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 20px;
+    }
+
+    .cart-btn {
+      background: var(--accent-color);
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: transform 0.2s;
+      box-shadow: 0 0 15px rgba(244, 197, 66, 0.3);
+    }
+
+    .cart-btn:hover {
+      transform: scale(1.05);
+    }
+
+    /* --- Views --- */
+    .view-section {
+      display: none;
+      padding-bottom: 50px;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .view-section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* --- Home Dashboard --- */
+    .hero-banner {
+      height: 400px;
+      background-image: url('https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+      background-size: cover;
+      background-position: center;
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 0 60px;
+      margin-bottom: 40px;
+    }
+
+    .hero-banner::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 100%);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 500px;
+    }
+
+    .hero-title {
+      font-size: 3.5rem;
+      margin: 0 0 15px 0;
+      line-height: 1.1;
+      color: #fff;
+    }
+
+    .hero-subtitle {
+      font-size: 1.2rem;
+      color: var(--accent-color);
+      margin-bottom: 30px;
+      font-weight: 300;
+    }
+
+    .btn-cta {
+      background: var(--accent-color);
+      color: #000;
+      border: none;
+      padding: 15px 40px;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.3s;
+    }
+
+    .btn-cta:hover {
+      background: #fff;
+      transform: translateX(5px);
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 2rem;
+      color: var(--accent-color);
+      margin: 40px 0 30px 0;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .favorites-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      padding: 0 40px;
+    }
+
+    .fav-card {
+      background: #222;
+      border-radius: 20px;
+      overflow: hidden;
+      position: relative;
+      transition: transform 0.3s;
+      cursor: pointer;
+    }
+
+    .fav-card:hover {
+      transform: translateY(-10px);
+    }
+
+    .fav-img {
+      width: 100%;
+      height: 250px;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .fav-info {
+      padding: 20px;
+      text-align: center;
+    }
+
+    .fav-name {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #fff;
+      margin: 0 0 10px 0;
+    }
+
+    .fav-price {
+      color: var(--accent-color);
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    /* --- Menu Grid --- */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 30px;
+      padding: 0 40px 40px 40px;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding-bottom: 20px;
+      transition: transform 0.3s;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .card:hover {
+      transform: translateY(-10px);
+    }
+
+    .card-image {
+      width: 100%;
+      height: 200px;
+      background-size: cover;
+      background-position: center;
+      /* Curve effect */
+      clip-path: ellipse(150% 100% at 50% 0%);
+      margin-bottom: 15px;
+    }
+
+    .card-category {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: var(--accent-color);
+      color: #000;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      z-index: 5;
+    }
+
+    .card-title {
+      color: var(--text-dark);
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin: 5px 0;
+      text-transform: uppercase;
+    }
+
+    .card-desc {
+      color: #666;
+      font-size: 0.85rem;
+      padding: 0 20px;
+      margin-bottom: 15px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      height: 2.8em;
+      /* Fixed height for alignment */
+    }
+
+    .card-price {
+      color: #000;
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 15px;
+    }
+
+    .btn-order {
+      background-color: var(--accent-color);
+      color: #000;
+      border: none;
+      padding: 12px 35px;
+      border-radius: 25px;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+      box-shadow: 0 5px 15px rgba(244, 197, 66, 0.4);
+    }
+
+    .btn-order:hover {
+      background-color: #d4a82c;
+      transform: scale(1.05);
+    }
+
+    /* --- Modal / Options --- */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(8px);
+    }
+
+    .modal-content {
+      background: #1a1a1a;
+      padding: 40px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 500px;
+      border: 1px solid #333;
+      position: relative;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .modal-title {
+      color: var(--accent-color);
+      margin-top: 0;
+      font-size: 1.8rem;
+      text-transform: uppercase;
+    }
+
+    .option-group {
+      margin-bottom: 25px;
+    }
+
+    .option-label {
+      display: block;
+      color: #888;
+      margin-bottom: 12px;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      color: #fff;
+      background: #2a2a2a;
+      padding: 10px 15px;
+      border-radius: 10px;
+      transition: background 0.2s;
+    }
+
+    .radio-option:hover {
+      background: #333;
+    }
+
+    input[type="radio"],
+    input[type="checkbox"] {
+      accent-color: var(--accent-color);
+      width: 18px;
+      height: 18px;
+    }
+
+    .btn-add-cart {
+      width: 100%;
+      padding: 15px;
+      background: var(--accent-color);
+      border: none;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 1.1rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      margin-top: 10px;
+    }
+
+    /* --- Cart Sidebar (Right) --- */
+    .cart-sidebar {
+      width: 400px;
+      background-color: #1a1a1a;
+      border-left: 1px solid #333;
+      display: flex;
+      flex-direction: column;
+      padding: 30px;
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      position: fixed;
+      right: 0;
+      top: 0;
+      height: 100%;
+      z-index: 100;
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .cart-sidebar.open {
+      transform: translateX(0);
+    }
+
+    .cart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      border-bottom: 1px solid #333;
+      padding-bottom: 15px;
+    }
+
+    .cart-items {
+      flex-grow: 1;
+      overflow-y: auto;
+      list-style: none;
+      padding: 0;
+    }
+
+    .cart-item {
+      background: #222;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      position: relative;
+      border-left: 3px solid var(--accent-color);
+    }
+
+    .cart-item-name {
+      font-weight: bold;
+      color: #fff;
+      font-size: 1rem;
+    }
+
+    .cart-item-details {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 5px;
+    }
+
+    .cart-item-price {
+      color: var(--accent-color);
+      font-weight: bold;
+      margin-top: 8px;
+      display: block;
+      font-size: 1.1rem;
+    }
+
+    .cart-remove {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: #666;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: color 0.2s;
+    }
+
+    .cart-remove:hover {
+      color: var(--danger-color);
+    }
+
+    .cart-footer {
+      border-top: 1px solid #333;
+      padding-top: 20px;
+    }
+
+    .cart-total {
+      display: flex;
+      justify-content: space-between;
+      font-size: 1.4rem;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 15px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      color: #fff;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      font-size: 1rem;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
+
+    /* --- Kitchen Zone (Bottom) --- */
+    .kitchen-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 350px;
+      background: #111;
+      border-top: 3px solid var(--accent-color);
+      z-index: 200;
+      padding: 30px;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .kitchen-panel.open {
+      transform: translateY(0);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(150%);
+      background: var(--accent-color);
+      color: #000;
+      padding: 15px 40px;
+      border-radius: 40px;
+      font-weight: bold;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 2000;
+      box-shadow: 0 10px 30px rgba(244, 197, 66, 0.4);
+      font-size: 1.1rem;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
 </head>
+
 <body>
 
-    <div class="container">
-        <!-- Sección Cliente -->
-        <div class="section left">
-            <h2>🍣 Realizar Pedido</h2>
-            <div class="form-group">
-                <label for="cliente">Nombre del Cliente:</label>
-                <input type="text" id="cliente" placeholder="Ej: Juan Pérez">
-            </div>
-            <div class="form-group">
-                <label for="maki">Selecciona tu Maki:</label>
-                <select id="maki">
-                    <option value="Acevichado">Acevichado</option>
-                    <option value="California">California</option>
-                    <option value="Avocado">Avocado</option>
-                    <option value="Furai">Furai</option>
-                </select>
-            </div>
-            <button onclick="crearPedido()">Enviar Pedido</button>
-            <p id="mensaje" style="margin-top: 10px; text-align: center;"></p>
-        </div>
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="logo" onclick="showHome()">
+      <h1>EDO</h1>
+      <span>SUSHI BAR</span>
+    </div>
+    <ul class="nav-menu">
+      <li class="nav-item"><a class="nav-link" onclick="showMenu('All')">Nuestra Carta</a></li>
+      <li class="nav-item"><a class="nav-link" onclick="showMenu('Promociones')">Promociones</a></li>
+      <li class="nav-item"><a class="nav-link" onclick="showMenu('Paquetes')">Paquetes</a></li>
+      <li class="nav-item"><a class="nav-link" onclick="showMenu('Makis')">Makis</a></li>
+      <li class="nav-item"><a class="nav-link" onclick="showMenu('Sashimi')">Sashimi</a></li>
+      <li class="nav-item"><a class="nav-link" onclick="showMenu('Nigiri')">Nigiri</a></li>
+    </ul>
 
-        <!-- Sección Cocina -->
-        <div class="section right">
-            <h2>👨‍🍳 Cocina / Pedidos</h2>
-            <button onclick="listarPedidos()" style="background-color: #333;">Refrescar Pedidos</button>
-            <ul id="lista-pedidos">
-                <!-- Los pedidos aparecerán aquí -->
-            </ul>
+    <div class="sidebar-footer">
+      <button class="btn-kitchen" onclick="toggleKitchen()">
+        👨‍🍳 Cocina
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="header">
+      <div class="page-title" id="page-title">Inicio</div>
+      <div class="header-actions">
+        <button class="cart-btn" onclick="toggleCart()">
+          🛒 <span id="cart-count">0</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- HOME VIEW -->
+    <div id="view-home" class="view-section active">
+      <div class="hero-banner">
+        <div class="hero-content">
+          <h2 class="hero-title">DESCUBRE EL ARTE DEL SUSHI</h2>
+          <p class="hero-subtitle">Fusión japonesa con los ingredientes más frescos.</p>
+          <button class="btn-cta" onclick="showMenu('All')">VER CARTA</button>
         </div>
+      </div>
+
+      <h3 class="section-title">Nuestros Favoritos</h3>
+      <div class="favorites-grid">
+        <div class="fav-card" onclick="showMenu('Makis')">
+          <div class="fav-img"
+            style="background-image: url('https://www.edosushibar.com/assets/sources/productos/makis/ACEVICHADO.jpeg');">
+          </div>
+          <div class="fav-info">
+            <div class="fav-name">Acevichado</div>
+            <div class="fav-price">S/. 25.00</div>
+          </div>
+        </div>
+        <div class="fav-card" onclick="showMenu('Makis')">
+          <div class="fav-img"
+            style="background-image: url('https://www.edosushibar.com/assets/sources/productos/makis/FURAI.jpeg');">
+          </div>
+          <div class="fav-info">
+            <div class="fav-name">Furai Maki</div>
+            <div class="fav-price">S/. 28.00</div>
+          </div>
+        </div>
+        <div class="fav-card" onclick="showMenu('Makis')">
+          <div class="fav-img"
+            style="background-image: url('https://www.edosushibar.com/assets/sources/productos/makis/CALIFORNIA.jpeg');">
+          </div>
+          <div class="fav-info">
+            <div class="fav-name">California</div>
+            <div class="fav-price">S/. 22.00</div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <script>
-        // ⚠️ IMPORTANTE: REEMPLAZA ESTA URL CON LA QUE TE DE AWS AL DESPLEGAR
-        const API_URL = "AQUI_TU_URL_DE_AWS"; 
+    <!-- MENU VIEW -->
+    <div id="view-menu" class="view-section">
+      <div id="products-grid" class="products-grid">
+        <!-- Products injected here -->
+        <div style="color:white; grid-column: 1/-1; text-align:center;">Cargando carta...</div>
+      </div>
+    </div>
+  </main>
 
-        async function crearPedido() {
-            const cliente = document.getElementById('cliente').value;
-            const maki = document.getElementById('maki').value;
-            const mensajeEl = document.getElementById('mensaje');
+  <!-- Cart Sidebar -->
+  <div id="cart-sidebar" class="cart-sidebar">
+    <div class="cart-header">
+      <h2 style="margin:0; color:var(--accent-color);">Tu Pedido</h2>
+      <button onclick="toggleCart()"
+        style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
+    </div>
+    <ul id="cart-items" class="cart-items">
+      <!-- Cart Items -->
+    </ul>
+    <div class="cart-footer">
+      <div class="cart-total">
+        <span>Total:</span>
+        <span>S/. <span id="cart-total">0.00</span></span>
+      </div>
+      <input type="text" id="customer-name" class="input-field" placeholder="Nombre del Cliente">
+      <button class="btn-add-cart" onclick="checkout()">CONFIRMAR PEDIDO</button>
+    </div>
+  </div>
 
-            if (!cliente) {
-                alert("Por favor ingresa un nombre");
-                return;
-            }
+  <!-- Product Options Modal -->
+  <div id="product-modal" class="modal-overlay">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <h2 id="modal-title" class="modal-title">Opciones</h2>
+      <input type="hidden" id="modal-product-id">
+      <input type="hidden" id="modal-product-price">
 
-            mensajeEl.textContent = "Enviando...";
+      <div class="option-group">
+        <label class="option-label">Cantidad de Cortes</label>
+        <label class="radio-option">
+          <input type="radio" name="modal-cuts" value="5" checked onchange="updateModalPrice()"> 5 Cortes (Precio Base)
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="modal-cuts" value="10" onchange="updateModalPrice()"> 10 Cortes (x1.8)
+        </label>
+      </div>
 
-            try {
-                const response = await fetch(`${API_URL}/orders`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        customerName: cliente,
-                        items: [maki],
-                        total: 25, // Precio hardcodeado para el demo
-                        salsas: ["Soya"]
-                    })
-                });
+      <div class="option-group">
+        <label class="option-label">Relleno</label>
+        <label class="radio-option">
+          <input type="radio" name="modal-filling" value="Langostino" checked> Langostino
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="modal-filling" value="Pescado del día"> Pescado del día
+        </label>
+      </div>
 
-                if (response.ok) {
-                    mensajeEl.textContent = "✅ Pedido enviado con éxito!";
-                    mensajeEl.style.color = "green";
-                    document.getElementById('cliente').value = "";
-                    // Opcional: refrescar la lista automáticamente
-                    // listarPedidos();
-                } else {
-                    throw new Error("Error en el servidor");
-                }
-            } catch (error) {
-                console.error(error);
-                mensajeEl.textContent = "❌ Error al enviar pedido. Revisa la consola y la URL.";
-                mensajeEl.style.color = "red";
-            }
+      <div class="option-group">
+        <label class="option-label">Salsas Extra (+ S/. 5.00)</label>
+        <label class="radio-option">
+          <input type="checkbox" class="modal-sauce" value="Acevichada" onchange="updateModalPrice()"> Acevichada
+        </label>
+        <label class="radio-option">
+          <input type="checkbox" class="modal-sauce" value="Tare" onchange="updateModalPrice()"> Tare
+        </label>
+        <label class="radio-option">
+          <input type="checkbox" class="modal-sauce" value="Shoyu" onchange="updateModalPrice()"> Shoyu
+        </label>
+      </div>
+
+      <div
+        style="margin-top:20px; border-top:1px solid #444; padding-top:20px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:1.5rem; font-weight:bold; color:var(--accent-color);">S/. <span
+            id="modal-total">0.00</span></span>
+        <button class="btn-order" onclick="confirmAddToCart()" style="padding:12px 40px; margin:0;">AGREGAR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kitchen Panel -->
+  <div id="kitchen-panel" class="kitchen-panel">
+    <div style="display:flex; justify-content:space-between; margin-bottom:30px;">
+      <h2 style="color:var(--accent-color); margin:0; font-size:2rem;">Comandas de Cocina</h2>
+      <div style="display:flex; gap:15px;">
+        <button onclick="fetchOrders()"
+          style="background:var(--accent-color); border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold;">Refrescar</button>
+        <button onclick="toggleKitchen()"
+          style="background:none; border:1px solid #555; color:#fff; padding:10px 20px; border-radius:8px; cursor:pointer;">Cerrar</button>
+      </div>
+    </div>
+    <div id="orders-list" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:25px;">
+      <!-- Orders -->
+    </div>
+  </div>
+
+  <div id="toast" class="toast">Pedido Agregado</div>
+
+  <script>
+    const API_URL = "https://zcnmvonpek.execute-api.us-east-1.amazonaws.com/dev";
+
+    // --- Data & State ---
+    const PRODUCT_IMAGES = {
+      "Parrillero": "https://www.edosushibar.com/assets/sources/productos/makis/PARRILLERO.jpeg",
+      "Samurai": "https://www.edosushibar.com/assets/sources/productos/makis/SAMURAI.jpeg",
+      "Pako": "https://www.edosushibar.com/assets/sources/productos/makis/PAKO.jpeg",
+      "California": "https://www.edosushibar.com/assets/sources/productos/makis/CALIFORNIA.jpeg",
+      "Lau": "https://www.edosushibar.com/assets/sources/productos/makis/LAU%20MAKI.jpeg",
+      "Furai": "https://www.edosushibar.com/assets/sources/productos/makis/FURAI.jpeg",
+      "Furai Maki": "https://www.edosushibar.com/assets/sources/productos/makis/FURAI.jpeg",
+      "Edo": "https://www.edosushibar.com/assets/sources/productos/makis/EDO.jpeg",
+      "Volcan": "https://www.edosushibar.com/assets/upfiles/VOLCAN.jpeg",
+      "Mira": "https://www.edosushibar.com/assets/upfiles/MIRAMAKI.jpeg",
+      "Pizza": "https://www.edosushibar.com/assets/sources/productos/makis/PIZZA.jpeg",
+      "Parmesano": "https://www.edosushibar.com/assets/sources/productos/makis/PARMESANO.jpeg",
+      "Masaki": "https://www.edosushibar.com/assets/sources/productos/makis/MASAKI.jpeg",
+      "Shogun": "https://www.edosushibar.com/assets/sources/productos/makis/SHOGUN.jpeg",
+      "Acevichado": "https://www.edosushibar.com/assets/sources/productos/makis/ACEVICHADO.jpeg",
+      "Ninja": "https://www.edosushibar.com/assets/sources/productos/makis/NINJA.jpeg",
+      "Tartare": "https://www.edosushibar.com/assets/sources/productos/makis/TARTARE.jpeg",
+      "Harayuku": "https://www.edosushibar.com/assets/upfiles/HARAYUKU.jpeg",
+      "Seiji": "https://www.edosushibar.com/assets/sources/productos/makis/SEIJI.jpeg"
+    };
+    const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+
+    let allProducts = [];
+    let cart = [];
+    let currentProduct = null; // For modal
+
+    // --- Initialization ---
+    async function init() {
+      await fetchProducts();
+      fetchOrders(); // Load kitchen initially
+    }
+
+    async function fetchProducts() {
+      const grid = document.getElementById('products-grid');
+      try {
+        const res = await fetch(`${API_URL}/products`);
+        const data = await res.json();
+
+        // Fallback if empty
+        if (!data || data.length === 0) {
+          allProducts = [
+            { id: '1', name: 'Acevichado', description: 'Clásico maki con salsa acevichada.', price: 25, category: 'Makis' },
+            { id: '2', name: 'California', description: 'Queso crema y palta.', price: 22, category: 'Makis' }
+          ];
+        } else {
+          allProducts = data;
         }
 
-        async function listarPedidos() {
-            const lista = document.getElementById('lista-pedidos');
-            lista.innerHTML = "Cargando...";
+        renderProducts(allProducts);
+      } catch (e) {
+        console.error(e);
+        grid.innerHTML = '<div style="color:red">Error cargando productos</div>';
+      }
+    }
 
-            try {
-                const response = await fetch(`${API_URL}/orders`);
-                const data = await response.json();
+    function renderProducts(products) {
+      const grid = document.getElementById('products-grid');
+      grid.innerHTML = '';
 
-                lista.innerHTML = ""; // Limpiar lista
+      products.forEach(p => {
+        const img = p.imageUrl || PRODUCT_IMAGES[p.name] || PRODUCT_IMAGES[Object.keys(PRODUCT_IMAGES).find(k => k.toLowerCase() === p.name.toLowerCase())] || DEFAULT_IMAGE;
 
-                if (data.length === 0) {
-                    lista.innerHTML = "<li style='text-align:center'>No hay pedidos aún.</li>";
-                    return;
-                }
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+                <div class="card-image" style="background-image: url('${img}')"></div>
+                <div class="card-category">${p.category || 'Maki'}</div>
+                <h3 class="card-title">${p.name}</h3>
+                <p class="card-desc">${p.description || 'Delicioso maki japonés.'}</p>
+                <div class="card-price">S/. ${parseFloat(p.price).toFixed(2)}</div>
+                <button class="btn-order" onclick="openProductModal('${p.id}')">Ordenar</button>
+            `;
+        grid.appendChild(card);
+      });
+    }
 
-                // Ordenar por fecha (opcional, si vienen con fecha)
-                // data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // --- Navigation Logic ---
+    function showHome() {
+      document.getElementById('view-home').classList.add('active');
+      document.getElementById('view-menu').classList.remove('active');
+      document.getElementById('page-title').textContent = "Inicio";
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    }
 
-                data.forEach(pedido => {
-                    const item = document.createElement('li');
-                    // Adaptar según la estructura que guardamos en DynamoDB
-                    const nombre = pedido.customerName || "Anónimo";
-                    const items = pedido.items ? pedido.items.join(", ") : "Sin items";
-                    const estado = pedido.status || "RECIBIDO";
-                    
-                    item.innerHTML = `
-                        <strong>${nombre}</strong> pidió: ${items}
-                        <span class="status">${estado}</span>
-                    `;
-                    lista.appendChild(item);
-                });
+    function showMenu(cat) {
+      document.getElementById('view-home').classList.remove('active');
+      document.getElementById('view-menu').classList.add('active');
+      document.getElementById('page-title').textContent = cat === 'All' ? 'Nuestra Carta' : cat;
 
-            } catch (error) {
-                console.error(error);
-                lista.innerHTML = "<li style='color:red'>Error al cargar pedidos. Revisa la URL.</li>";
-            }
+      // Update active link
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+      // Find link with this category and activate it (simple match)
+      const links = document.querySelectorAll('.nav-link');
+      for (let l of links) {
+        if (l.textContent.includes(cat) || (cat === 'All' && l.textContent.includes('Carta'))) {
+          l.classList.add('active');
+          break;
         }
-    </script>
+      }
+
+      if (cat === 'All') {
+        renderProducts(allProducts);
+      } else {
+        const filtered = allProducts.filter(p => (p.category || 'Makis') === cat);
+        renderProducts(filtered);
+      }
+    }
+
+    // --- Modal Logic ---
+    function openProductModal(id) {
+      currentProduct = allProducts.find(p => p.id === id);
+      if (!currentProduct) return;
+
+      document.getElementById('modal-title').textContent = currentProduct.name;
+      document.getElementById('modal-product-id').value = currentProduct.id;
+      document.getElementById('modal-product-price').value = currentProduct.price;
+
+      // Reset form
+      document.querySelector('input[name="modal-cuts"][value="5"]').checked = true;
+      document.querySelector('input[name="modal-filling"][value="Langostino"]').checked = true;
+      document.querySelectorAll('.modal-sauce').forEach(c => c.checked = false);
+
+      updateModalPrice();
+      document.getElementById('product-modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('product-modal').style.display = 'none';
+    }
+
+    function updateModalPrice() {
+      if (!currentProduct) return;
+      let price = parseFloat(currentProduct.price);
+
+      const cuts = document.querySelector('input[name="modal-cuts"]:checked').value;
+      if (cuts === "10") price *= 1.8;
+
+      const sauces = document.querySelectorAll('.modal-sauce:checked').length;
+      price += (sauces * 5);
+
+      document.getElementById('modal-total').textContent = price.toFixed(2);
+    }
+
+    function confirmAddToCart() {
+      const cuts = document.querySelector('input[name="modal-cuts"]:checked').value;
+      const filling = document.querySelector('input[name="modal-filling"]:checked').value;
+      const sauces = Array.from(document.querySelectorAll('.modal-sauce:checked')).map(c => c.value);
+      const finalPrice = parseFloat(document.getElementById('modal-total').textContent);
+
+      cart.push({
+        id: Date.now(),
+        product: currentProduct,
+        cuts,
+        filling,
+        sauces,
+        price: finalPrice
+      });
+
+      closeModal();
+      updateCartUI();
+      showToast("Agregado al carrito");
+      document.getElementById('cart-sidebar').classList.add('open'); // Auto open cart
+    }
+
+    // --- Cart Logic ---
+    function toggleCart() {
+      document.getElementById('cart-sidebar').classList.toggle('open');
+    }
+
+    function updateCartUI() {
+      const list = document.getElementById('cart-items');
+      const count = document.getElementById('cart-count');
+      const totalEl = document.getElementById('cart-total');
+
+      list.innerHTML = '';
+      let total = 0;
+
+      cart.forEach(item => {
+        total += item.price;
+        const li = document.createElement('li');
+        li.className = 'cart-item';
+        li.innerHTML = `
+                <div class="cart-item-name">${item.product.name}</div>
+                <div class="cart-item-details">${item.cuts} cortes • ${item.filling}</div>
+                <div class="cart-item-details">${item.sauces.join(', ')}</div>
+                <span class="cart-item-price">S/. ${item.price.toFixed(2)}</span>
+                <button class="cart-remove" onclick="removeFromCart(${item.id})">&times;</button>
+            `;
+        list.appendChild(li);
+      });
+
+      count.textContent = cart.length;
+      totalEl.textContent = total.toFixed(2);
+    }
+
+    function removeFromCart(id) {
+      cart = cart.filter(i => i.id !== id);
+      updateCartUI();
+    }
+
+    async function checkout() {
+      if (cart.length === 0) return alert("Carrito vacío");
+      const name = document.getElementById('customer-name').value;
+      if (!name) return alert("Ingresa tu nombre");
+
+      const total = cart.reduce((sum, i) => sum + i.price, 0);
+      const items = cart.map(i => {
+        let desc = `${i.product.name} (${i.cuts}c, ${i.filling})`;
+        if (i.sauces.length) desc += ` [${i.sauces.join('+')}]`;
+        return desc;
+      });
+
+      try {
+        const res = await fetch(`${API_URL}/orders`, {
+          method: 'POST',
+          body: JSON.stringify({
+            customerName: name,
+            items: items,
+            total: total,
+            salsas: []
+          })
+        });
+
+        if (res.ok) {
+          showToast("Pedido Enviado! 🚀");
+          cart = [];
+          updateCartUI();
+          document.getElementById('customer-name').value = '';
+          toggleCart();
+          fetchOrders(); // Refresh kitchen
+        } else {
+          alert("Error enviando pedido");
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Error de conexión");
+      }
+    }
+
+    // --- Kitchen Logic ---
+    function toggleKitchen() {
+      document.getElementById('kitchen-panel').classList.toggle('open');
+    }
+
+    async function fetchOrders() {
+      const list = document.getElementById('orders-list');
+      try {
+        const res = await fetch(`${API_URL}/orders`);
+        const orders = await res.json();
+
+        list.innerHTML = '';
+        orders.reverse().forEach(o => {
+          const div = document.createElement('div');
+          div.style.cssText = "background:#222; padding:20px; border-radius:12px; border-left:4px solid var(--accent-color); color:#fff; box-shadow:0 5px 15px rgba(0,0,0,0.3);";
+          div.innerHTML = `
+                    <div style="font-weight:bold; font-size:1.1rem; margin-bottom:10px;">${o.customerName}</div>
+                    <div style="font-size:0.9rem; color:#aaa; margin-bottom:10px; line-height:1.4;">${o.items.join('<br>')}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #333; padding-top:10px;">
+                        <div style="font-weight:bold; color:var(--accent-color); font-size:1.1rem;">Total: S/. ${o.total}</div>
+                        <div style="font-size:0.8rem; background:#333; padding:4px 8px; border-radius:4px;">${o.status}</div>
+                    </div>
+                `;
+          list.appendChild(div);
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // Start
+    init();
+
+  </script>
 </body>
+
 </html>

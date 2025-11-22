@@ -38,7 +38,9 @@ def createProduct(event, context):
             'id': product_id,
             'name': data['name'],
             'price': Decimal(str(data['price'])), # Store as Decimal
-            'description': data.get('description', '')
+            'description': data.get('description', ''),
+            'category': data.get('category', 'General'), # Default to 'General'
+            'imageUrl': data.get('imageUrl', '') # Optional image URL
         }
         
         products_table.put_item(Item=item)
