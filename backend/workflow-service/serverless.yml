@@ -1,6 +1,5 @@
 service: edo-workflow-service
-
-
+org: fatimapv
 
 provider:
   name: aws
@@ -9,7 +8,7 @@ provider:
   environment:
     EVENT_BUS_NAME: EdoOrderBus
   iam:
-    role: arn:aws:iam::520247722169:role/LabRole
+    role: arn:aws:iam::076456812464:role/LabRole
 
 plugins:
   - serverless-step-functions
@@ -27,6 +26,7 @@ stepFunctions:
   stateMachines:
     EdoOrderWorkflow:
       name: EdoOrderWorkflow
+      role: arn:aws:iam::076456812464:role/LabRole
       definition:
         StartAt: Start
         States:
