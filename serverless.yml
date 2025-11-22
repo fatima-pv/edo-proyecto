@@ -1,0 +1,462 @@
+service: edo-sushi-bar
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  memorySize: 256
+  timeout: 30
+  
+  # Variables de entorno globales para todas las funciones
+  environment:
+    USERS_TABLE: ${self:custom.usersTableName}
+    ORDERS_TABLE: ${self:custom.ordersTableName}
+    EVENT_BUS_NAME: ${self:custom.eventBusName}
+    STATE_MACHINE_ARN: ${self:resources.Outputs.EdoOrderWorkflowArn.Value}
+    STAGE: ${self:provider.stage}
+  
+  # Permisos IAM globales para todas las funciones Lambda
+  iam:
+    role: arn:aws:iam::520247722169:role/LabRole
+    
+      statements:
+        # Permisos para DynamoDB
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:Query
+            - dynamodb:Scan
+          Resource:
+            - !GetAtt EdoUsersTable.Arn
+            - !GetAtt EdoOrdersTable.Arn
+            - !Sub "${EdoOrdersTable.Arn}/index/*"
+        
+        # Permisos para Step Functions
+        - Effect: Allow
+          Action:
+            - states:StartExecution
+            - states:SendTaskSuccess
+            - states:SendTaskFailure
+          Resource:
+            - !Ref EdoOrderWorkflow
+        
+        # Permisos para EventBridge
+        - Effect: Allow
+          Action:
+            - events:PutEvents
+          Resource:
+            - !GetAtt EdoOrderBus.Arn
+
+# Plugins necesarios
+plugins:
+  - serverless-step-functions
+
+# Variables personalizadas
+custom:
+  usersTableName: ${self:service}-users-${self:provider.stage}
+  ordersTableName: ${self:service}-orders-${self:provider.stage}
+  eventBusName: EdoOrderBus-${self:provider.stage}
+
+# Definición de las funciones Lambda
+functions:
+  # ========================================
+  # FUNCIÓN: authLogin
+  # ========================================
+  # Autentica usuarios usando credenciales almacenadas en DynamoDB
+  # Input: { email: string, password: string }
+  # Output: { token: string, role: string, tenant_id: string }
+  authLogin:
+    handler: src.handlers.auth.login
+    events:
+      - http:
+          path: /auth/login
+          method: post
+          cors: true
+    environment:
+      JWT_SECRET: ${env:JWT_SECRET, 'edo-secret-key-change-in-production'}
+
+  # ========================================
+  # FUNCIÓN: createOrder
+  # ========================================
+  # Crea un nuevo pedido en DynamoDB e inicia el Step Function
+  # Solo accesible por usuarios con rol CLIENTE
+  # Input: { items: Array, total: number, customer_info: object }
+  # Output: { order_id: string, status: string, execution_arn: string }
+  createOrder:
+    handler: src.handlers.orders.create_order
+    events:
+      - http:
+          path: /orders
+          method: post
+          cors: true
+          # Nota: Implementar authorizer custom si es necesario
+    environment:
+      STATE_MACHINE_ARN: !Ref EdoOrderWorkflow
+
+  # ========================================
+  # FUNCIÓN: getOrders
+  # ========================================
+  # Lista pedidos según el rol del usuario:
+  # - CLIENTE: Solo sus propios pedidos
+  # - STAFF: Todos los pedidos activos de su tenant_id
+  # Output: { orders: Array<Order> }
+  getOrders:
+    handler: src.handlers.orders.get_orders
+    events:
+      - http:
+          path: /orders
+          method: get
+          cors: true
+
+  # ========================================
+  # FUNCIÓN: updateOrderStep
+  # ========================================
+  # Avanza el flujo del Step Function al siguiente paso
+  # Solo accesible por usuarios con rol STAFF
+  # Input: { order_id: string, task_token: string, step: string, notes?: string }
+  # 
+  # IMPORTANTE - Callback Pattern con waitForTaskToken:
+  # 
+  # 1. Cuando el Step Function llega a un estado con '.waitForTaskToken',
+  #    se pausa y genera un 'taskToken' único.
+  # 
+  # 2. Este taskToken debe ser almacenado en DynamoDB junto con el pedido
+  #    cuando se envía la notificación al staff.
+  # 
+  # 3. El staff llama a este endpoint con el taskToken correspondiente.
+  # 
+  # 4. Esta función ejecuta 'SendTaskSuccess' con ese token, lo que
+  #    desbloquea el Step Function y permite continuar al siguiente estado.
+  # 
+  # 5. Si hay un error, usar 'SendTaskFailure' en lugar de Success.
+  updateOrderStep:
+    handler: src.handlers.orders.update_order_step
+    events:
+      - http:
+          path: /orders/advance
+          method: post
+          cors: true
+
+  # ========================================
+  # FUNCIÓN: notifyStaff
+  # ========================================
+  # Función auxiliar invocada por EventBridge cuando cambia el estado
+  # Puede enviar notificaciones push, emails, o actualizar WebSockets
+  notifyStaff:
+    handler: src.handlers.notifications.notify_staff
+    events:
+      - eventBridge:
+          eventBus: !GetAtt EdoOrderBus.Arn
+          pattern:
+            source:
+              - edo.orders
+            detail-type:
+              - OrderStatusChanged
+
+# ========================================
+# STEP FUNCTIONS - State Machine
+# ========================================
+stepFunctions:
+  stateMachines:
+    EdoOrderWorkflow:
+      name: EdoOrderWorkflow-${self:provider.stage}
+      definition:
+        Comment: "Flujo de trabajo para procesar pedidos en Edo Sushi Bar (Cocina -> Empaquetado -> Delivery)"
+        StartAt: ReceiveOrder
+        States:
+          # ================================
+          # Estado: ReceiveOrder
+          # ================================
+          # Recibe el pedido inicial y emite evento a EventBridge
+          ReceiveOrder:
+            Type: Task
+            Resource: arn:aws:states:::events:putEvents
+            Parameters:
+              Entries:
+                - Source: edo.orders
+                  DetailType: OrderStatusChanged
+                  Detail:
+                    order_id.$: $.order_id
+                    tenant_id.$: $.tenant_id
+                    status: RECEIVED
+                    timestamp.$: $$.State.EnteredTime
+                  EventBusName: ${self:custom.eventBusName}
+            ResultPath: $.eventResult
+            Next: WaitCocinero
+
+          # ================================
+          # Estado: WaitCocinero
+          # ================================
+          # CALLBACK PATTERN - Espera a que el cocinero marque "Preparación Iniciada"
+          # 
+          # Cómo funciona waitForTaskToken:
+          # 1. Este estado se pausa inmediatamente y genera un taskToken único
+          # 2. El taskToken se pasa en el contexto ($.taskToken) y debe guardarse
+          # 3. El estado permanece en espera hasta que se llame a SendTaskSuccess
+          # 4. El staff (cocinero) llama al endpoint /orders/advance con el taskToken
+          # 5. La función updateOrderStep ejecuta SendTaskSuccess y desbloquea el flujo
+          WaitCocinero:
+            Type: Task
+            Resource: arn:aws:states:::lambda:invoke.waitForTaskToken
+            Parameters:
+              FunctionName: !GetAtt NotifyStaffLambdaFunction.Arn
+              Payload:
+                order_id.$: $.order_id
+                tenant_id.$: $.tenant_id
+                status: WAITING_KITCHEN
+                task_token.$: $$.Task.Token
+                message: "Nuevo pedido esperando preparación en cocina"
+            ResultPath: $.kitchenResult
+            TimeoutSeconds: 3600  # Timeout de 1 hora
+            Next: EmitCookingStarted
+
+          # ================================
+          # Estado: EmitCookingStarted
+          # ================================
+          EmitCookingStarted:
+            Type: Task
+            Resource: arn:aws:states:::events:putEvents
+            Parameters:
+              Entries:
+                - Source: edo.orders
+                  DetailType: OrderStatusChanged
+                  Detail:
+                    order_id.$: $.order_id
+                    tenant_id.$: $.tenant_id
+                    status: COOKING
+                    timestamp.$: $$.State.EnteredTime
+                  EventBusName: ${self:custom.eventBusName}
+            ResultPath: $.eventResult
+            Next: WaitEmpaquetado
+
+          # ================================
+          # Estado: WaitEmpaquetado
+          # ================================
+          # CALLBACK PATTERN - Espera al despachador para empaquetar
+          WaitEmpaquetado:
+            Type: Task
+            Resource: arn:aws:states:::lambda:invoke.waitForTaskToken
+            Parameters:
+              FunctionName: !GetAtt NotifyStaffLambdaFunction.Arn
+              Payload:
+                order_id.$: $.order_id
+                tenant_id.$: $.tenant_id
+                status: WAITING_PACKAGING
+                task_token.$: $$.Task.Token
+                message: "Pedido listo para empaquetar"
+            ResultPath: $.packagingResult
+            TimeoutSeconds: 3600
+            Next: EmitPackagingDone
+
+          # ================================
+          # Estado: EmitPackagingDone
+          # ================================
+          EmitPackagingDone:
+            Type: Task
+            Resource: arn:aws:states:::events:putEvents
+            Parameters:
+              Entries:
+                - Source: edo.orders
+                  DetailType: OrderStatusChanged
+                  Detail:
+                    order_id.$: $.order_id
+                    tenant_id.$: $.tenant_id
+                    status: PACKAGED
+                    timestamp.$: $$.State.EnteredTime
+                  EventBusName: ${self:custom.eventBusName}
+            ResultPath: $.eventResult
+            Next: WaitDelivery
+
+          # ================================
+          # Estado: WaitDelivery
+          # ================================
+          # CALLBACK PATTERN - Espera al motorizado para entregar
+          WaitDelivery:
+            Type: Task
+            Resource: arn:aws:states:::lambda:invoke.waitForTaskToken
+            Parameters:
+              FunctionName: !GetAtt NotifyStaffLambdaFunction.Arn
+              Payload:
+                order_id.$: $.order_id
+                tenant_id.$: $.tenant_id
+                status: WAITING_DELIVERY
+                task_token.$: $$.Task.Token
+                message: "Pedido listo para entrega"
+            ResultPath: $.deliveryResult
+            TimeoutSeconds: 7200  # Timeout de 2 horas para delivery
+            Next: EmitDelivered
+
+          # ================================
+          # Estado: EmitDelivered
+          # ================================
+          EmitDelivered:
+            Type: Task
+            Resource: arn:aws:states:::events:putEvents
+            Parameters:
+              Entries:
+                - Source: edo.orders
+                  DetailType: OrderStatusChanged
+                  Detail:
+                    order_id.$: $.order_id
+                    tenant_id.$: $.tenant_id
+                    status: DELIVERED
+                    timestamp.$: $$.State.EnteredTime
+                  EventBusName: ${self:custom.eventBusName}
+            ResultPath: $.eventResult
+            Next: Success
+
+          # ================================
+          # Estado: Success
+          # ================================
+          # Fin exitoso del flujo de trabajo
+          Success:
+            Type: Succeed
+
+# ========================================
+# RECURSOS DE AWS (CloudFormation)
+# ========================================
+resources:
+  Resources:
+    # ================================
+    # DynamoDB: EdoUsersTable
+    # ================================
+    # Tabla para almacenar usuarios con autenticación custom
+    # PK: email
+    # Atributos: password (hash), role (CLIENTE/STAFF), tenant_id (sede)
+    EdoUsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.usersTableName}
+        BillingMode: PAY_PER_REQUEST  # On-demand pricing
+        AttributeDefinitions:
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: email
+            KeyType: HASH
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+        Tags:
+          - Key: Environment
+            Value: ${self:provider.stage}
+          - Key: Project
+            Value: EdoSushiBar
+
+    # ================================
+    # DynamoDB: EdoOrdersTable
+    # ================================
+    # Tabla para almacenar pedidos (Multi-tenant)
+    # PK: tenant_id (sede)
+    # SK: order_id
+    # GSI: Búsqueda por estado para dashboard del staff
+    EdoOrdersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.ordersTableName}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: tenant_id
+            AttributeType: S
+          - AttributeName: order_id
+            AttributeType: S
+          - AttributeName: status
+            AttributeType: S
+          - AttributeName: created_at
+            AttributeType: N
+        KeySchema:
+          - AttributeName: tenant_id
+            KeyType: HASH
+          - AttributeName: order_id
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          # GSI para buscar pedidos por estado dentro de un tenant
+          - IndexName: StatusIndex
+            KeySchema:
+              - AttributeName: tenant_id
+                KeyType: HASH
+              - AttributeName: status
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          # GSI para buscar pedidos por fecha
+          - IndexName: DateIndex
+            KeySchema:
+              - AttributeName: tenant_id
+                KeyType: HASH
+              - AttributeName: created_at
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+        Tags:
+          - Key: Environment
+            Value: ${self:provider.stage}
+          - Key: Project
+            Value: EdoSushiBar
+
+    # ================================
+    # EventBridge: EdoOrderBus
+    # ================================
+    # Event Bus personalizado para arquitectura EDA
+    # Recibe eventos de cambios de estado de pedidos
+    EdoOrderBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        Name: ${self:custom.eventBusName}
+
+    # ================================
+    # EventBridge: Archive (Opcional)
+    # ================================
+    # Archivo de eventos para auditoría y replay
+    EdoOrderBusArchive:
+      Type: AWS::Events::Archive
+      Properties:
+        ArchiveName: EdoOrderBusArchive-${self:provider.stage}
+        SourceArn: !GetAtt EdoOrderBus.Arn
+        RetentionDays: 30
+        Description: "Archivo de eventos de pedidos para auditoría"
+
+  # ================================
+  # OUTPUTS
+  # ================================
+  # Valores de salida útiles después del deployment
+  Outputs:
+    UsersTableName:
+      Description: "Nombre de la tabla de usuarios"
+      Value: !Ref EdoUsersTable
+      Export:
+        Name: ${self:service}-${self:provider.stage}-UsersTableName
+
+    OrdersTableName:
+      Description: "Nombre de la tabla de pedidos"
+      Value: !Ref EdoOrdersTable
+      Export:
+        Name: ${self:service}-${self:provider.stage}-OrdersTableName
+
+    EventBusName:
+      Description: "Nombre del Event Bus"
+      Value: !Ref EdoOrderBus
+      Export:
+        Name: ${self:service}-${self:provider.stage}-EventBusName
+
+    EventBusArn:
+      Description: "ARN del Event Bus"
+      Value: !GetAtt EdoOrderBus.Arn
+      Export:
+        Name: ${self:service}-${self:provider.stage}-EventBusArn
+
+    EdoOrderWorkflowArn:
+      Description: "ARN del Step Function"
+      Value: !Ref EdoOrderWorkflow
+      Export:
+        Name: ${self:service}-${self:provider.stage}-StateMachineArn
+
+    ApiEndpoint:
+      Description: "API Gateway endpoint URL"
+      Value:
+        Fn::Sub: "https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${self:provider.stage}"

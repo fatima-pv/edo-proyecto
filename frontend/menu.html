@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú - Edo Sushi Bar</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="header-title">
+                🍣 Edo Sushi Bar
+            </div>
+            <div class="header-user">
+                <div class="user-info">
+                    <div class="user-email" id="userEmail"></div>
+                    <div class="user-role">Cliente</div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="Auth.logout()">
+                    Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="grid grid-2">
+            <!-- Menú -->
+            <div>
+                <div class="card">
+                    <h2 class="card-title">🍱 Nuestro Menú</h2>
+                    <div id="menuItems" class="grid grid-2">
+                        <!-- Los items se cargarán aquí dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carrito -->
+            <div>
+                <div class="card" style="position: sticky; top: 100px;">
+                    <h2 class="card-title">🛒 Tu Pedido</h2>
+
+                    <div id="alert-container"></div>
+
+                    <div id="cartItems">
+                        <p class="text-center" style="color: var(--text-secondary); padding: 2rem;">
+                            Tu carrito está vacío
+                        </p>
+                    </div>
+
+                    <div id="cartFooter" class="hidden">
+                        <div class="cart-total">
+                            <span>Total:</span>
+                            <span id="cartTotal">S/ 0.00</span>
+                        </div>
+
+                        <button class="btn btn-primary btn-block" onclick="placeOrder()">
+                            Realizar Pedido
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mis Pedidos -->
+                <div class="card mt-2">
+                    <h2 class="card-title">📋 Mis Pedidos</h2>
+                    <div id="myOrders">
+                        <p class="text-center" style="color: var(--text-secondary);">
+                            No tienes pedidos activos
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/menu.js"></script>
+</body>
+
+</html>
