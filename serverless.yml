@@ -65,7 +65,7 @@ functions:
           cors: true
           # Nota: Implementar authorizer custom si es necesario
     environment:
-      STATE_MACHINE_ARN: !Ref EdoOrderWorkflow
+      STATE_MACHINE_ARN: !Sub 'arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:EdoOrderWorkflow-${self:provider.stage}'
 
   # ========================================
   # FUNCIÓN: getOrders
