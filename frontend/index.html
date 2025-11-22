@@ -1,19 +1,208 @@
-<!doctype html>
-<html lang="en">
-
+<!DOCTYPE html>
+<html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Ruda:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <title>Edo Sushi Bar Clone</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edo Sushi Bar - MVP Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+        }
+        .container {
+            display: flex;
+            width: 90%;
+            max-width: 1000px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .section {
+            flex: 1;
+            padding: 30px;
+        }
+        .left {
+            border-right: 1px solid #eee;
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #ff4500;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #e03e00;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        li {
+            background: #f9f9f9;
+            border-bottom: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+        li strong {
+            color: #333;
+        }
+        .status {
+            font-size: 0.8em;
+            color: #888;
+            float: right;
+        }
+    </style>
 </head>
-
 <body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
-</body>
 
+    <div class="container">
+        <!-- Sección Cliente -->
+        <div class="section left">
+            <h2>🍣 Realizar Pedido</h2>
+            <div class="form-group">
+                <label for="cliente">Nombre del Cliente:</label>
+                <input type="text" id="cliente" placeholder="Ej: Juan Pérez">
+            </div>
+            <div class="form-group">
+                <label for="maki">Selecciona tu Maki:</label>
+                <select id="maki">
+                    <option value="Acevichado">Acevichado</option>
+                    <option value="California">California</option>
+                    <option value="Avocado">Avocado</option>
+                    <option value="Furai">Furai</option>
+                </select>
+            </div>
+            <button onclick="crearPedido()">Enviar Pedido</button>
+            <p id="mensaje" style="margin-top: 10px; text-align: center;"></p>
+        </div>
+
+        <!-- Sección Cocina -->
+        <div class="section right">
+            <h2>👨‍🍳 Cocina / Pedidos</h2>
+            <button onclick="listarPedidos()" style="background-color: #333;">Refrescar Pedidos</button>
+            <ul id="lista-pedidos">
+                <!-- Los pedidos aparecerán aquí -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ IMPORTANTE: REEMPLAZA ESTA URL CON LA QUE TE DE AWS AL DESPLEGAR
+        const API_URL = "AQUI_TU_URL_DE_AWS"; 
+
+        async function crearPedido() {
+            const cliente = document.getElementById('cliente').value;
+            const maki = document.getElementById('maki').value;
+            const mensajeEl = document.getElementById('mensaje');
+
+            if (!cliente) {
+                alert("Por favor ingresa un nombre");
+                return;
+            }
+
+            mensajeEl.textContent = "Enviando...";
+
+            try {
+                const response = await fetch(`${API_URL}/orders`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        customerName: cliente,
+                        items: [maki],
+                        total: 25, // Precio hardcodeado para el demo
+                        salsas: ["Soya"]
+                    })
+                });
+
+                if (response.ok) {
+                    mensajeEl.textContent = "✅ Pedido enviado con éxito!";
+                    mensajeEl.style.color = "green";
+                    document.getElementById('cliente').value = "";
+                    // Opcional: refrescar la lista automáticamente
+                    // listarPedidos();
+                } else {
+                    throw new Error("Error en el servidor");
+                }
+            } catch (error) {
+                console.error(error);
+                mensajeEl.textContent = "❌ Error al enviar pedido. Revisa la consola y la URL.";
+                mensajeEl.style.color = "red";
+            }
+        }
+
+        async function listarPedidos() {
+            const lista = document.getElementById('lista-pedidos');
+            lista.innerHTML = "Cargando...";
+
+            try {
+                const response = await fetch(`${API_URL}/orders`);
+                const data = await response.json();
+
+                lista.innerHTML = ""; // Limpiar lista
+
+                if (data.length === 0) {
+                    lista.innerHTML = "<li style='text-align:center'>No hay pedidos aún.</li>";
+                    return;
+                }
+
+                // Ordenar por fecha (opcional, si vienen con fecha)
+                // data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                data.forEach(pedido => {
+                    const item = document.createElement('li');
+                    // Adaptar según la estructura que guardamos en DynamoDB
+                    const nombre = pedido.customerName || "Anónimo";
+                    const items = pedido.items ? pedido.items.join(", ") : "Sin items";
+                    const estado = pedido.status || "RECIBIDO";
+                    
+                    item.innerHTML = `
+                        <strong>${nombre}</strong> pidió: ${items}
+                        <span class="status">${estado}</span>
+                    `;
+                    lista.appendChild(item);
+                });
+
+            } catch (error) {
+                console.error(error);
+                lista.innerHTML = "<li style='color:red'>Error al cargar pedidos. Revisa la URL.</li>";
+            }
+        }
+    </script>
+</body>
 </html>
