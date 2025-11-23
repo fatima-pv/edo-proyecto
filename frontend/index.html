@@ -808,7 +808,9 @@
   <div id="toast" class="toast">Pedido Agregado</div>
 
   <script>
-    const API_URL = "https://zcnmvonpek.execute-api.us-east-1.amazonaws.com/dev";
+    // Microservices API URLs
+    const PRODUCTS_API = "https://ylrfc2ftpf.execute-api.us-east-1.amazonaws.com/dev";
+    const ORDERS_API = "https://xrz56m3gci.execute-api.us-east-1.amazonaws.com/dev";
 
     // --- Data & State ---
     const PRODUCT_IMAGES = {
@@ -847,7 +849,7 @@
     async function fetchProducts() {
       const grid = document.getElementById('products-grid');
       try {
-        const res = await fetch(`${API_URL}/products`);
+        const res = await fetch(`${PRODUCTS_API}/products`);
         const data = await res.json();
 
         // Fallback if empty
@@ -876,16 +878,42 @@
 
         const card = document.createElement('div');
         card.className = 'card';
+
+        // Determine if product needs options modal
+        const isMaki = p.category === 'Makis' || p.category === 'Maki';
+        const isCombo = p.category === 'Paquetes' || p.category === 'Promociones';
+
         card.innerHTML = `
                 <div class="card-image" style="background-image: url('${img}')"></div>
                 <div class="card-category">${p.category || 'Maki'}</div>
                 <h3 class="card-title">${p.name}</h3>
-                <p class="card-desc">${p.description || 'Delicioso maki japonés.'}</p>
+                <p class="card-desc">${p.description || 'Delicioso producto japonés.'}</p>
                 <div class="card-price">S/. ${parseFloat(p.price).toFixed(2)}</div>
-                <button class="btn-order" onclick="openProductModal('${p.id}')">Ordenar</button>
+                <button class="btn-order" onclick="${isMaki || isCombo ? `openProductModal('${p.id}')` : `addDirectToCart('${p.id}')`}">
+                    ${isMaki || isCombo ? 'Ordenar' : 'Agregar'}
+                </button>
             `;
         grid.appendChild(card);
       });
+    }
+
+    // --- Direct Add to Cart (for Bebidas, etc.) ---
+    function addDirectToCart(id) {
+      const product = allProducts.find(p => p.id === id);
+      if (!product) return;
+
+      cart.push({
+        id: Date.now(),
+        product: product,
+        cuts: "N/A",
+        filling: "N/A",
+        sauces: [],
+        price: parseFloat(product.price)
+      });
+
+      updateCartUI();
+      showToast(`${product.name} agregado al carrito`);
+      document.getElementById('cart-sidebar').classList.add('open');
     }
 
     // --- Navigation Logic ---
@@ -985,8 +1013,12 @@
     function renderComboOptions(container) {
       // Use maxSelections from backend or default to 4
       const maxSelection = currentProduct.maxSelections || 4;
+      const includeDrinks = currentProduct.includeDrinks || false;
+      const drinkOptions = currentProduct.drinkOptions || [];
+      const includeExtras = currentProduct.includeExtras || false;
+      const extraOptions = currentProduct.extraOptions || [];
 
-      container.innerHTML = `
+      let html = `
             <div class="option-group">
                 <label class="option-label" style="display:flex; justify-content:space-between;">
                     <span>Escoge ${maxSelection} variedades de makis</span>
@@ -1007,6 +1039,36 @@
                 <div id="combo-error" style="color:var(--danger-color); font-size:0.8rem; margin-top:10px; display:none;">Debes seleccionar exactamente ${maxSelection} variedades.</div>
             </div>
         `;
+
+      // Add drinks section if configured
+      if (includeDrinks && drinkOptions.length > 0) {
+        html += `
+            <div class="option-group" style="margin-top:20px;">
+                <label class="option-label">Elige tu bebida</label>
+                ${drinkOptions.map((drink, idx) => `
+                    <label class="radio-option">
+                      <input type="radio" name="combo-drink" value="${drink}" ${idx === 0 ? 'checked' : ''}> ${drink}
+                    </label>
+                `).join('')}
+            </div>
+        `;
+      }
+
+      // Add extras section if configured
+      if (includeExtras && extraOptions.length > 0) {
+        html += `
+            <div class="option-group" style="margin-top:20px;">
+                <label class="option-label">Extras (opcional)</label>
+                ${extraOptions.map(extra => `
+                    <label class="radio-option">
+                      <input type="checkbox" class="combo-extra" value="${extra.name}" data-price="${extra.price}" onchange="updateModalPrice()"> ${extra.name} (+S/. ${extra.price})
+                    </label>
+                `).join('')}
+            </div>
+        `;
+      }
+
+      container.innerHTML = html;
     }
 
     function updateComboCount(flavor, change, max) {
@@ -1077,9 +1139,27 @@
           return;
         }
 
+        // Capture drink selection
+        const drinkEl = document.querySelector('input[name="combo-drink"]:checked');
+        const selectedDrink = drinkEl ? drinkEl.value : null;
+
+        // Capture extras with dynamic pricing
+        const extras = [];
+        let extraCost = 0;
+        document.querySelectorAll('.combo-extra:checked').forEach(el => {
+          const extraName = el.value;
+          const extraPrice = parseFloat(el.dataset.price) || 0;
+          extras.push(extraName);
+          extraCost += extraPrice;
+        });
+
         cartItem.cuts = "Pack";
         cartItem.filling = "Variado";
-        cartItem.sauces = selectedFlavors; // We reuse 'sauces' field to store the flavors list for display
+        const details = [...selectedFlavors];
+        if (selectedDrink) details.push(`Bebida: ${selectedDrink}`);
+        if (extras.length > 0) details.push(...extras.map(e => `Extra: ${e}`));
+        cartItem.sauces = details;
+        cartItem.price += extraCost; // Add extra cost to base price
 
       } else {
         // Standard Logic
@@ -1149,7 +1229,7 @@
       });
 
       try {
-        const res = await fetch(`${API_URL}/orders`, {
+        const res = await fetch(`${ORDERS_API}/orders`, {
           method: 'POST',
           body: JSON.stringify({
             customerName: name,
@@ -1183,7 +1263,7 @@
     async function fetchOrders() {
       const list = document.getElementById('orders-list');
       try {
-        const res = await fetch(`${API_URL}/orders`);
+        const res = await fetch(`${ORDERS_API}/orders`);
         const orders = await res.json();
 
         list.innerHTML = '';

@@ -23,7 +23,8 @@ def createProduct(event, context):
             'description': data.get('description', ''),
             'category': data.get('category', 'General'),
             'imageUrl': data.get('imageUrl', ''),
-            'maxSelections': int(data.get('maxSelections', 4))
+            'maxSelections': int(data.get('maxSelections', 4)),
+            'comboSections': data.get('comboSections', [])  # Flexible combo sections
         }
         
         products_table.put_item(Item=item)
