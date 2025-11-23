@@ -21,14 +21,9 @@ def createProduct(event, context):
             'name': data['name'],
             'price': Decimal(str(data['price'])),
             'description': data.get('description', ''),
-            'category': data.get('category', 'General'), # Default to 'General'
-            'imageUrl': data.get('imageUrl', ''), # Optional image URL
-            'maxSelections': int(data.get('maxSelections', 4)), # Default to 4 for combos
-            'includeDrinks': data.get('includeDrinks', False), # Whether combo includes drinks
-            'drinkOptions': data.get('drinkOptions', []), # List of drink options
-            'includeExtras': data.get('includeExtras', False), # Whether combo includes extras
-            'extraOptions': data.get('extraOptions', []), # List of extra options with prices
-            'comboSections': data.get('comboSections', []) # Flexible combo sections (makis, entradas, bebidas, etc.)
+            'category': data.get('category', 'General'),
+            'imageUrl': data.get('imageUrl', ''),
+            'maxSelections': int(data.get('maxSelections', 4))
         }
         
         products_table.put_item(Item=item)
