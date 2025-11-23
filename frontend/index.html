@@ -431,10 +431,26 @@
       padding: 40px;
       border-radius: 20px;
       width: 90%;
-      max-width: 500px;
+      max-width: 700px;
+      max-height: 85vh;
+      overflow-y: auto;
+      overflow-x: hidden;
       border: 1px solid #333;
       position: relative;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Hide scrollbar but keep functionality */
+    .modal-content::-webkit-scrollbar {
+      width: 0;
+      background: transparent;
+    }
+
+    .modal-content {
+      scrollbar-width: none;
+      /* Firefox */
+      -ms-overflow-style: none;
+      /* IE/Edge */
     }
 
     .modal-close {
@@ -1011,64 +1027,108 @@
     const COMBO_FLAVORS = ["Acevichado", "California", "Furai", "Shogun", "Samurai", "Parrillero", "Lau", "Ninja"];
 
     function renderComboOptions(container) {
-      // Use maxSelections from backend or default to 4
-      const maxSelection = currentProduct.maxSelections || 4;
-      const includeDrinks = currentProduct.includeDrinks || false;
-      const drinkOptions = currentProduct.drinkOptions || [];
-      const includeExtras = currentProduct.includeExtras || false;
-      const extraOptions = currentProduct.extraOptions || [];
+      const comboSections = currentProduct.comboSections || [];
 
-      let html = `
-            <div class="option-group">
-                <label class="option-label" style="display:flex; justify-content:space-between;">
-                    <span>Escoge ${maxSelection} variedades de makis</span>
-                    <span id="combo-counter" style="color:var(--accent-color); font-weight:bold;">0/${maxSelection}</span>
-                </label>
-                <div id="combo-options-list" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    ${COMBO_FLAVORS.map(flavor => `
-                        <div class="combo-item" style="background:#2a2a2a; padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:0.9rem;">${flavor}</span>
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <button onclick="updateComboCount('${flavor}', -1, ${maxSelection})" style="background:#444; border:none; color:#fff; width:24px; height:24px; border-radius:50%; cursor:pointer;">-</button>
-                                <span id="count-${flavor}" class="flavor-count" data-flavor="${flavor}">0</span>
-                                <button onclick="updateComboCount('${flavor}', 1, ${maxSelection})" style="background:var(--accent-color); border:none; color:#000; width:24px; height:24px; border-radius:50%; cursor:pointer; font-weight:bold;">+</button>
-                            </div>
-                        </div>
-                    `).join('')}
+      // Fallback to old logic if no comboSections defined
+      if (comboSections.length === 0) {
+        const maxSelection = currentProduct.maxSelections || 4;
+        container.innerHTML = `
+          <div class="option-group">
+            <label class="option-label" style="display:flex; justify-content:space-between;">
+              <span>Escoge ${maxSelection} variedades de makis</span>
+              <span id="combo-counter" style="color:var(--accent-color); font-weight:bold;">0/${maxSelection}</span>
+            </label>
+            <div id="combo-options-list" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+              ${COMBO_FLAVORS.map(flavor => `
+                <div class="combo-item" style="background:#2a2a2a; padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-size:0.9rem;">${flavor}</span>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <button onclick="updateComboCount('${flavor}', -1, ${maxSelection})" style="background:#444; border:none; color:#fff; width:24px; height:24px; border-radius:50%; cursor:pointer;">-</button>
+                    <span id="count-${flavor}" class="flavor-count" data-flavor="${flavor}">0</span>
+                    <button onclick="updateComboCount('${flavor}', 1, ${maxSelection})" style="background:var(--accent-color); border:none; color:#000; width:24px; height:24px; border-radius:50%; cursor:pointer; font-weight:bold;">+</button>
+                  </div>
                 </div>
-                <div id="combo-error" style="color:var(--danger-color); font-size:0.8rem; margin-top:10px; display:none;">Debes seleccionar exactamente ${maxSelection} variedades.</div>
+              `).join('')}
             </div>
+            <div id="combo-error" style="color:var(--danger-color); font-size:0.8rem; margin-top:10px; display:none;">Debes seleccionar exactamente ${maxSelection} variedades.</div>
+          </div>
         `;
-
-      // Add drinks section if configured
-      if (includeDrinks && drinkOptions.length > 0) {
-        html += `
-            <div class="option-group" style="margin-top:20px;">
-                <label class="option-label">Elige tu bebida</label>
-                ${drinkOptions.map((drink, idx) => `
-                    <label class="radio-option">
-                      <input type="radio" name="combo-drink" value="${drink}" ${idx === 0 ? 'checked' : ''}> ${drink}
-                    </label>
-                `).join('')}
-            </div>
-        `;
+        return;
       }
 
-      // Add extras section if configured
-      if (includeExtras && extraOptions.length > 0) {
-        html += `
-            <div class="option-group" style="margin-top:20px;">
-                <label class="option-label">Extras (opcional)</label>
-                ${extraOptions.map(extra => `
-                    <label class="radio-option">
-                      <input type="checkbox" class="combo-extra" value="${extra.name}" data-price="${extra.price}" onchange="updateModalPrice()"> ${extra.name} (+S/. ${extra.price})
-                    </label>
-                `).join('')}
+      // New dynamic rendering based on comboSections
+      let html = '';
+      comboSections.forEach((section, sectionIdx) => {
+        html += `<div class="option-group" style="margin-top:${sectionIdx > 0 ? '20px' : '0'};">`;
+        html += `<label class="option-label">${section.title}</label>`;
+
+        if (section.type === 'single-select') {
+          // Radio buttons for single selection in 4 columns
+          html += `<div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;">`;
+          section.options.forEach((option, idx) => {
+            html += `
+              <label class="radio-option" style="margin:0;">
+                <input type="radio" name="section-${sectionIdx}" value="${option}" ${idx === 0 ? 'checked' : ''}> ${option}
+              </label>
+            `;
+          });
+          html += `</div>`;
+        } else if (section.type === 'multi-select') {
+          // Counter-based multi-selection
+          const maxSel = section.maxSelections || 1;
+          html += `
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+              <span style="color:#888; font-size:0.85rem;">Selecciona ${maxSel}</span>
+              <span id="counter-section-${sectionIdx}" style="color:var(--accent-color); font-weight:bold;">0/${maxSel}</span>
             </div>
-        `;
-      }
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          `;
+          section.options.forEach(option => {
+            html += `
+              <div style="background:#2a2a2a; padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.9rem;">${option}</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <button onclick="updateSectionCount(${sectionIdx}, '${option}', -1, ${maxSel})" style="background:#444; border:none; color:#fff; width:24px; height:24px; border-radius:50%; cursor:pointer;">-</button>
+                  <span id="count-${sectionIdx}-${option.replace(/\s+/g, '_')}" class="section-count" data-section="${sectionIdx}" data-option="${option}">0</span>
+                  <button onclick="updateSectionCount(${sectionIdx}, '${option}', 1, ${maxSel})" style="background:var(--accent-color); border:none; color:#000; width:24px; height:24px; border-radius:50%; cursor:pointer; font-weight:bold;">+</button>
+                </div>
+              </div>
+            `;
+          });
+          html += `</div>`;
+          html += `<div id="error-section-${sectionIdx}" style="color:var(--danger-color); font-size:0.8rem; margin-top:10px; display:none;">Debes seleccionar exactamente ${maxSel}.</div>`;
+        }
+
+        html += `</div>`;
+      });
 
       container.innerHTML = html;
+    }
+
+    // New function for section-based counting
+    function updateSectionCount(sectionIdx, option, change, max) {
+      const optionId = option.replace(/\s+/g, '_');
+      const countSpan = document.getElementById(`count-${sectionIdx}-${optionId}`);
+      let current = parseInt(countSpan.textContent);
+
+      // Calculate total for this section
+      let totalSelected = 0;
+      document.querySelectorAll(`.section-count[data-section="${sectionIdx}"]`).forEach(el => {
+        totalSelected += parseInt(el.textContent);
+      });
+
+      if (change > 0 && totalSelected >= max) return;
+      if (change < 0 && current <= 0) return;
+
+      current += change;
+      countSpan.textContent = current;
+
+      totalSelected += change;
+      document.getElementById(`counter-section-${sectionIdx}`).textContent = `${totalSelected}/${max}`;
+
+      if (totalSelected === max) {
+        document.getElementById(`error-section-${sectionIdx}`).style.display = 'none';
+      }
     }
 
     function updateComboCount(flavor, change, max) {
@@ -1121,48 +1181,74 @@
       };
 
       if (currentProduct.category === 'Paquetes' || currentProduct.category === 'Promociones') {
-        // Combo Logic
-        const max = currentProduct.maxSelections || 4; // Use dynamic limit
-        let totalSelected = 0;
-        let selectedFlavors = [];
+        // Check if using new comboSections system
+        const comboSections = currentProduct.comboSections || [];
 
-        document.querySelectorAll('.flavor-count').forEach(el => {
-          const count = parseInt(el.textContent);
-          if (count > 0) {
-            totalSelected += count;
-            selectedFlavors.push(`${count}x ${el.dataset.flavor}`);
+        if (comboSections.length > 0) {
+          // New comboSections logic
+          let allSelections = [];
+          let isValid = true;
+
+          comboSections.forEach((section, sectionIdx) => {
+            if (section.type === 'single-select') {
+              const selected = document.querySelector(`input[name="section-${sectionIdx}"]:checked`);
+              if (selected) {
+                allSelections.push(`${section.title}: ${selected.value}`);
+              }
+            } else if (section.type === 'multi-select') {
+              const maxSel = section.maxSelections || 1;
+              let totalSelected = 0;
+              let sectionSelections = [];
+
+              document.querySelectorAll(`.section-count[data-section="${sectionIdx}"]`).forEach(el => {
+                const count = parseInt(el.textContent);
+                if (count > 0) {
+                  totalSelected += count;
+                  sectionSelections.push(`${count}x ${el.dataset.option}`);
+                }
+              });
+
+              if (totalSelected !== maxSel) {
+                document.getElementById(`error-section-${sectionIdx}`).style.display = 'block';
+                isValid = false;
+              } else {
+                allSelections.push(...sectionSelections);
+              }
+            }
+          });
+
+          if (!isValid) return;
+
+          cartItem.cuts = "Pack";
+          cartItem.filling = "Variado";
+          cartItem.sauces = allSelections;
+
+        } else {
+          // Old combo logic (fallback)
+          const max = currentProduct.maxSelections || 4;
+          let totalSelected = 0;
+          let selectedFlavors = [];
+
+          document.querySelectorAll('.flavor-count').forEach(el => {
+            const count = parseInt(el.textContent);
+            if (count > 0) {
+              totalSelected += count;
+              selectedFlavors.push(`${count}x ${el.dataset.flavor}`);
+            }
+          });
+
+          if (totalSelected !== max) {
+            document.getElementById('combo-error').style.display = 'block';
+            return;
           }
-        });
 
-        if (totalSelected !== max) {
-          document.getElementById('combo-error').style.display = 'block';
-          return;
+          cartItem.cuts = "Pack";
+          cartItem.filling = "Variado";
+          cartItem.sauces = selectedFlavors;
         }
 
-        // Capture drink selection
-        const drinkEl = document.querySelector('input[name="combo-drink"]:checked');
-        const selectedDrink = drinkEl ? drinkEl.value : null;
-
-        // Capture extras with dynamic pricing
-        const extras = [];
-        let extraCost = 0;
-        document.querySelectorAll('.combo-extra:checked').forEach(el => {
-          const extraName = el.value;
-          const extraPrice = parseFloat(el.dataset.price) || 0;
-          extras.push(extraName);
-          extraCost += extraPrice;
-        });
-
-        cartItem.cuts = "Pack";
-        cartItem.filling = "Variado";
-        const details = [...selectedFlavors];
-        if (selectedDrink) details.push(`Bebida: ${selectedDrink}`);
-        if (extras.length > 0) details.push(...extras.map(e => `Extra: ${e}`));
-        cartItem.sauces = details;
-        cartItem.price += extraCost; // Add extra cost to base price
-
       } else {
-        // Standard Logic
+        // Standard Logic (Makis individuales)
         const cuts = document.querySelector('input[name="modal-cuts"]:checked').value;
         const filling = document.querySelector('input[name="modal-filling"]:checked').value;
         const sauces = Array.from(document.querySelectorAll('.modal-sauce:checked')).map(c => c.value);
