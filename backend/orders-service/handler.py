@@ -129,6 +129,11 @@ def getOrder(event, context):
         
         order = response['Item']
         
+        # Obtener datos del cliente (puede estar anidado o plano dependiendo de la versión)
+        customer_data = order.get('customer', {})
+        customer_name = customer_data.get('name') if isinstance(customer_data, dict) else order.get('customerName', 'Cliente')
+        address = customer_data.get('address') if isinstance(customer_data, dict) else order.get('address', '')
+
         # Retornar información completa para el tracking
         public_data = {
             'orderId': order['orderId'],
@@ -136,10 +141,10 @@ def getOrder(event, context):
             'receiptUrl': order.get('receiptUrl', ''),
             'createdAt': order.get('createdAt', ''),
             'deliveryType': order.get('deliveryType', 'RECOJO'),
-            'customerName': order.get('customerName', 'Cliente'),
+            'customerName': customer_name,
             'total': order.get('total', 0),
             'items': order.get('items', []),
-            'address': order.get('address', '')
+            'address': address
         }
         
         return {

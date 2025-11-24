@@ -1297,6 +1297,30 @@
 
   <div id="toast" class="toast">Pedido Agregado</div>
 
+  <!-- Success Modal -->
+  <div id="success-modal" class="modal-overlay">
+    <div class="modal-content" style="text-align: center; max-width: 500px;">
+      <div style="font-size: 4rem; margin-bottom: 20px;">🎉</div>
+      <h2 class="modal-title" style="margin-bottom: 10px;">¡Pedido Recibido!</h2>
+      <p style="color: #ccc; margin-bottom: 20px;">Tu pedido ha sido procesado exitosamente.</p>
+
+      <div style="background: #2a2a2a; padding: 15px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #444;">
+        <p style="margin: 0 0 5px 0; font-size: 0.9rem; color: #888;">ID de Pedido</p>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+          <span id="success-order-id"
+            style="font-family: monospace; font-size: 1.2rem; color: var(--accent-color); font-weight: bold;"></span>
+          <button onclick="copyOrderId()" style="background: none; border: none; cursor: pointer; color: #fff;"
+            title="Copiar ID">📋</button>
+        </div>
+      </div>
+
+      <p style="font-size: 0.9rem; color: #888; margin-bottom: 30px;">Guarda este ID para hacer seguimiento a tu pedido.
+      </p>
+
+      <button class="btn-order" onclick="closeSuccessModal()" style="width: 100%;">VER SEGUIMIENTO</button>
+    </div>
+  </div>
+
   <script>
     // Microservices API URLs
     const PRODUCTS_API = "https://ylrfc2ftpf.execute-api.us-east-1.amazonaws.com/dev";
@@ -1916,9 +1940,11 @@
           document.getElementById('address').value = '';
           document.getElementById('reference').value = '';
 
-          // Show tracking view with the new order
+          // Show success modal with order ID
           if (orderId) {
-            showOrderTracking(orderId);
+            document.getElementById('success-order-id').textContent = orderId;
+            document.getElementById('success-modal').style.display = 'flex';
+            window.lastCreatedOrderId = orderId;
           } else {
             showToast("¡Pedido Realizado Exitosamente! 🚀");
             setTimeout(() => showHome(), 2000);
@@ -1929,6 +1955,22 @@
       } catch (e) {
         console.error(e);
         alert("Error de conexión");
+      }
+    }
+
+    function copyOrderId() {
+      const orderId = document.getElementById('success-order-id').textContent;
+      navigator.clipboard.writeText(orderId).then(() => {
+        showToast("ID copiado al portapapeles");
+      });
+    }
+
+    function closeSuccessModal() {
+      document.getElementById('success-modal').style.display = 'none';
+      if (window.lastCreatedOrderId) {
+        showOrderTracking(window.lastCreatedOrderId);
+      } else {
+        showHome();
       }
     }
 
@@ -2045,11 +2087,34 @@
       document.getElementById('progress-bar').style.width = `${progressPercent}%`;
 
       // Render order details
+      let itemsHtml = '<ul style="list-style: none; padding: 0; margin: 10px 0; border-top: 1px solid #333; border-bottom: 1px solid #333; padding: 10px 0;">';
+
+      if (order.items && order.items.length > 0) {
+        order.items.forEach(item => {
+          const product = item.product || {};
+          itemsHtml += `
+            <li style="display: flex; justify-content: space-between; margin-bottom: 5px; color: #ccc; font-size: 0.9rem;">
+              <span>${product.name || 'Producto'}</span>
+              <span>S/. ${(product.price || 0).toFixed(2)}</span>
+            </li>
+          `;
+        });
+      } else {
+        itemsHtml += '<li style="color: #666;">No hay items registrados</li>';
+      }
+      itemsHtml += '</ul>';
+
       const detailsHtml = `
         <p><strong>Cliente:</strong> ${order.customerName || order.customer?.name || 'N/A'}</p>
         <p><strong>Tipo:</strong> ${deliveryType === 'DELIVERY' ? 'Delivery' : 'Recojo en Local'}</p>
         ${deliveryType === 'DELIVERY' ? `<p><strong>Dirección:</strong> ${order.address || order.customer?.address || 'N/A'}</p>` : ''}
-        <p><strong>Total:</strong> S/. ${order.total?.toFixed(2) || '0.00'}</p>
+        <div style="margin: 15px 0;">
+          <strong>Productos:</strong>
+          ${itemsHtml}
+        </div>
+        <p style="font-size: 1.2rem; color: var(--accent-color); text-align: right; margin-top: 10px;">
+          <strong>Total: S/. ${parseFloat(order.total || 0).toFixed(2)}</strong>
+        </p>
       `;
       document.getElementById('order-details-content').innerHTML = detailsHtml;
     }
