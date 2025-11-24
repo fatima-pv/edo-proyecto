@@ -8,7 +8,6 @@ from datetime import datetime
 dynamodb = boto3.resource('dynamodb')
 orders_table = dynamodb.Table(os.environ['ORDERS_TABLE'])
 events_client = boto3.client('events')
-sfn_client = boto3.client('stepfunctions')
 
 class DecimalEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -18,7 +17,7 @@ class DecimalEncoder(json.JSONEncoder):
 
 def createOrder(event, context):
     """
-    Crea un pedido, lo guarda en DynamoDB, emite evento a EventBridge e inicia Step Function
+    Crea un pedido, lo guarda en DynamoDB y emite evento a EventBridge
     """
     try:
         data = json.loads(event['body'])
@@ -39,8 +38,7 @@ def createOrder(event, context):
             'total': Decimal(str(data['total'])),
             'deliveryType': data.get('deliveryType', 'RECOJO'),  # DELIVERY o RECOJO
             'status': 'RECIBIDO',
-            'taskToken': '',  # Se llenará en el workflow
-            'receiptUrl': '',  # Se llenará después
+            'receiptUrl': '',  # Se llenará después por receipt-service
             'createdAt': datetime.utcnow().isoformat(),
             'updatedAt': datetime.utcnow().isoformat()
         }
@@ -59,7 +57,8 @@ def createOrder(event, context):
                             'orderId': order_id,
                             'customer': order['customer'],
                             'total': float(order['total']),
-                            'deliveryType': order['deliveryType']
+                            'deliveryType': order['deliveryType'],
+                            'items': data['items']
                         }),
                         'EventBusName': os.environ['ORDER_BUS_NAME']
                     }
@@ -67,16 +66,6 @@ def createOrder(event, context):
             )
         except Exception as e:
             print(f"Error emitting event: {str(e)}")
-        
-        # Iniciar Step Function
-        try:
-            state_machine_arn = os.environ['STATE_MACHINE_ARN']
-            sfn_client.start_execution(
-                stateMachineArn=state_machine_arn,
-                input=json.dumps({'orderId': order_id})
-            )
-        except Exception as e:
-            print(f"Error starting workflow: {str(e)}")
         
         return {
             'statusCode': 200,
@@ -165,58 +154,33 @@ def getOrder(event, context):
             'body': json.dumps({'error': str(e)})
         }
 
-def advanceOrder(event, context):
+def updateOrderStatus(event, context):
     """
-    Avanza el estado del pedido en el workflow
-    POST /orders/advance
-    Body: { "orderId": "..." }
+    Actualiza el estado del pedido (para cocina)
+    PUT /orders/{orderId}/status
+    Body: { "status": "EN_COCINA" }
     """
     try:
+        order_id = event['pathParameters']['orderId']
         data = json.loads(event['body'])
-        order_id = data['orderId']
+        new_status = data['status']
         
-        # Obtener el pedido
-        response = orders_table.get_item(Key={'orderId': order_id})
-        
-        if 'Item' not in response:
-            return {
-                'statusCode': 404,
-                'headers': {'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'Pedido no encontrado'})
-            }
-        
-        order = response['Item']
-        task_token = order.get('taskToken', '')
-        
-        if not task_token:
+        # Validar estados permitidos
+        valid_statuses = ['RECIBIDO', 'EN_COCINA', 'EMPACANDO', 'EN_DELIVERY', 'COMPLETADO']
+        if new_status not in valid_statuses:
             return {
                 'statusCode': 400,
                 'headers': {'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'No hay task token disponible'})
+                'body': json.dumps({'error': f'Estado inválido. Debe ser uno de: {valid_statuses}'})
             }
         
-        # Enviar success al Step Function
-        sfn_client.send_task_success(
-            taskToken=task_token,
-            output=json.dumps({'orderId': order_id})
-        )
-        
         # Actualizar estado en DynamoDB
-        current_status = order['status']
-        next_status = {
-            'RECIBIDO': 'EN_COCINA',
-            'EN_COCINA': 'EMPACANDO',
-            'EMPACANDO': 'EN_DELIVERY',
-            'EN_DELIVERY': 'COMPLETADO'
-        }.get(current_status, 'COMPLETADO')
-        
         orders_table.update_item(
             Key={'orderId': order_id},
-            UpdateExpression='SET #status = :status, taskToken = :empty, updatedAt = :updated',
+            UpdateExpression='SET #status = :status, updatedAt = :updated',
             ExpressionAttributeNames={'#status': 'status'},
             ExpressionAttributeValues={
-                ':status': next_status,
-                ':empty': '',
+                ':status': new_status,
                 ':updated': datetime.utcnow().isoformat()
             }
         )
@@ -226,11 +190,12 @@ def advanceOrder(event, context):
             'headers': {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+                'Access-Control-Allow-Methods': 'OPTIONS,PUT'
             },
             'body': json.dumps({
-                'message': 'Pedido avanzado',
-                'newStatus': next_status
+                'message': 'Estado actualizado',
+                'orderId': order_id,
+                'newStatus': new_status
             })
         }
     except Exception as e:
@@ -239,79 +204,3 @@ def advanceOrder(event, context):
             'headers': {'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': str(e)})
         }
-
-# Funciones para Step Functions (waitForTaskToken)
-
-def waitForKitchen(event, context):
-    """
-    Guarda el taskToken y espera a que cocina avance el pedido
-    """
-    try:
-        order_id = event['orderId']
-        task_token = event['taskToken']
-        
-        # Guardar taskToken en DynamoDB
-        orders_table.update_item(
-            Key={'orderId': order_id},
-            UpdateExpression='SET taskToken = :token, #status = :status, updatedAt = :updated',
-            ExpressionAttributeNames={'#status': 'status'},
-            ExpressionAttributeValues={
-                ':token': task_token,
-                ':status': 'EN_COCINA',
-                ':updated': datetime.utcnow().isoformat()
-            }
-        )
-        
-        # No retornamos nada, el workflow queda pausado hasta que se llame advanceOrder
-        return {'message': 'Waiting for kitchen'}
-    except Exception as e:
-        print(f"Error in waitForKitchen: {str(e)}")
-        raise
-
-def waitForPacking(event, context):
-    """
-    Guarda el taskToken y espera a que empaque avance el pedido
-    """
-    try:
-        order_id = event['orderId']
-        task_token = event['taskToken']
-        
-        orders_table.update_item(
-            Key={'orderId': order_id},
-            UpdateExpression='SET taskToken = :token, #status = :status, updatedAt = :updated',
-            ExpressionAttributeNames={'#status': 'status'},
-            ExpressionAttributeValues={
-                ':token': task_token,
-                ':status': 'EMPACANDO',
-                ':updated': datetime.utcnow().isoformat()
-            }
-        )
-        
-        return {'message': 'Waiting for packing'}
-    except Exception as e:
-        print(f"Error in waitForPacking: {str(e)}")
-        raise
-
-def waitForDelivery(event, context):
-    """
-    Guarda el taskToken y espera a que delivery avance el pedido
-    """
-    try:
-        order_id = event['orderId']
-        task_token = event['taskToken']
-        
-        orders_table.update_item(
-            Key={'orderId': order_id},
-            UpdateExpression='SET taskToken = :token, #status = :status, updatedAt = :updated',
-            ExpressionAttributeNames={'#status': 'status'},
-            ExpressionAttributeValues={
-                ':token': task_token,
-                ':status': 'EN_DELIVERY',
-                ':updated': datetime.utcnow().isoformat()
-            }
-        )
-        
-        return {'message': 'Waiting for delivery'}
-    except Exception as e:
-        print(f"Error in waitForDelivery: {str(e)}")
-        raise
