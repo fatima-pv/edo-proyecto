@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edo Staff Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        /* Login Screen */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid #d4af37;
+            box-shadow: 0 8px 32px rgba(212, 175, 55, 0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-box h1 {
+            color: #d4af37;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #d4af37;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d4af37;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 16px;
+        }
+
+        .form-group select option {
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+            color: #1a1a1a;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: none;
+            padding: 20px;
+        }
+
+        .dashboard.active {
+            display: block;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #d4af37;
+        }
+
+        .header h1 {
+            color: #d4af37;
+            font-size: 24px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .role-badge {
+            background: #d4af37;
+            color: #1a1a1a;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .btn-logout {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Orders Board */
+        .orders-board {
+            display: grid;
+            gap: 20px;
+        }
+
+        .order-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid #d4af37;
+            border-radius: 12px;
+            padding: 20px;
+            transition: transform 0.2s;
+        }
+
+        .order-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #d4af37;
+        }
+
+        .order-id {
+            font-size: 12px;
+            color: #d4af37;
+            font-family: monospace;
+        }
+
+        .order-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-CONFIRMADO {
+            background: #ffc107;
+            color: #1a1a1a;
+        }
+
+        .status-EN_PREPARACION {
+            background: #ff9800;
+            color: #1a1a1a;
+        }
+
+        .status-LISTO_PARA_RETIRAR {
+            background: #4caf50;
+            color: white;
+        }
+
+        .status-EN_CAMINO {
+            background: #2196f3;
+            color: white;
+        }
+
+        .order-details {
+            margin-bottom: 15px;
+        }
+
+        .order-details p {
+            margin: 8px 0;
+            color: #e0e0e0;
+        }
+
+        .order-details strong {
+            color: #d4af37;
+        }
+
+        .delivery-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        .delivery-DELIVERY {
+            background: #2196f3;
+            color: white;
+        }
+
+        .delivery-PICKUP {
+            background: #9c27b0;
+            color: white;
+        }
+
+        .order-items {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .order-items h4 {
+            color: #d4af37;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .order-items ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .order-items li {
+            padding: 4px 0;
+            color: #e0e0e0;
+            font-size: 13px;
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-kitchen {
+            background: linear-gradient(135deg, #ff9800 0%, #ff5722 100%);
+            color: white;
+        }
+
+        .btn-packing {
+            background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
+            color: white;
+        }
+
+        .btn-delivery {
+            background: linear-gradient(135deg, #2196f3 0%, #03a9f4 100%);
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+
+        .empty-state h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #d4af37;
+            font-size: 18px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <h1>🍣 Edo Staff Portal</h1>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="emailInput" placeholder="tu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="passwordInput" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-login">Iniciar Sesión</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="dashboard">
+        <div class="header">
+            <h1>🍣 Edo Staff Portal</h1>
+            <div class="user-info">
+                <span id="userName"></span>
+                <span id="userRole" class="role-badge"></span>
+                <button class="btn-logout" onclick="logout()">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <div id="ordersContainer" class="orders-board">
+            <div class="loading">Cargando pedidos...</div>
+        </div>
+    </div>
+
+    <script>
+        // ⚙️ CONFIGURACIÓN - Cambia esta URL por tu API
+        const API_URL = 'https://xrz56m3gci.execute-api.us-east-1.amazonaws.com/dev';
+        const AUTH_URL = 'TU_URL_AUTH_AQUI'; // URL del users-service
+
+        let currentUser = null;
+        let pollingInterval = null;
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+
+            try {
+                const response = await fetch(`${AUTH_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentUser = data.user;
+                    localStorage.setItem('edoUser', JSON.stringify(currentUser));
+                    showDashboard();
+                } else {
+                    alert(data.error || 'Error al iniciar sesión');
+                }
+            } catch (error) {
+                alert('Error de conexión: ' + error.message);
+            }
+        });
+
+        // Mostrar Dashboard
+        function showDashboard() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('dashboard').classList.add('active');
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('userRole').textContent = currentUser.role;
+
+            loadOrders();
+            pollingInterval = setInterval(loadOrders, 5000);
+        }
+
+        // Cargar pedidos
+        async function loadOrders() {
+            try {
+                const response = await fetch(`${API_URL}/orders`);
+                const orders = await response.json();
+
+                const filteredOrders = filterOrdersByRole(orders);
+                renderOrders(filteredOrders);
+            } catch (error) {
+                console.error('Error cargando pedidos:', error);
+            }
+        }
+
+        // Filtrar pedidos según rol
+        function filterOrdersByRole(orders) {
+            const role = currentUser.role;
+
+            switch (role) {
+                case 'ADMIN':
+                    return orders.filter(o => o.status === 'CONFIRMADO');
+                case 'COCINERO':
+                    return orders.filter(o => o.status === 'CONFIRMADO' || o.status === 'EN_PREPARACION');
+                case 'DESPACHADOR':
+                    return orders.filter(o => o.status === 'LISTO_PARA_RETIRAR');
+                case 'REPARTIDOR':
+                    return orders.filter(o => o.status === 'LISTO_PARA_RETIRAR' && o.deliveryType === 'DELIVERY');
+                default:
+                    return [];
+            }
+        }
+
+        // Renderizar pedidos
+        function renderOrders(orders) {
+            const container = document.getElementById('ordersContainer');
+
+            if (orders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>✅ No hay pedidos pendientes</h3>
+                        <p>Todos los pedidos están al día</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = orders.map(order => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <span class="order-id">#${order.orderId.substring(0, 8)}</span>
+                        <span class="order-status status-${order.status}">${order.status}</span>
+                    </div>
+                    <div class="order-details">
+                        <p><strong>Cliente:</strong> ${order.customer.name}</p>
+                        <p><strong>Total:</strong> S/ ${order.total}
+                            <span class="delivery-badge delivery-${order.deliveryType}">${order.deliveryType}</span>
+                        </p>
+                        ${order.deliveryType === 'DELIVERY' ? `<p><strong>Dirección:</strong> ${order.customer.address}</p>` : ''}
+                    </div>
+                    <div class="order-items">
+                        <h4>Items:</h4>
+                        <ul>
+                            ${order.items.map(item => `<li>• ${item.product.name} - S/ ${item.product.price}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ${getActionButton(order)}
+                </div>
+            `).join('');
+        }
+
+        // Obtener botón de acción según rol y estado
+        function getActionButton(order) {
+            const role = currentUser.role;
+
+            if (role === 'COCINERO' && order.status === 'CONFIRMADO') {
+                return `<button class="btn-action btn-kitchen" onclick="advanceOrder('${order.orderId}', 'kitchen')">🍳 Marcar en Preparación</button>`;
+            }
+
+            if (role === 'COCINERO' && order.status === 'EN_PREPARACION') {
+                return `<button class="btn-action btn-packing" onclick="advanceOrder('${order.orderId}', 'packing')">📦 Platillo Terminado</button>`;
+            }
+
+            if (role === 'DESPACHADOR' && order.status === 'LISTO_PARA_RETIRAR') {
+                if (order.deliveryType === 'DELIVERY') {
+                    return `<button class="btn-action btn-delivery" onclick="advanceOrder('${order.orderId}', 'delivery')">🏍️ Asignar a Motorizado</button>`;
+                } else {
+                    return `<button class="btn-action btn-packing" onclick="markAsCompleted('${order.orderId}')">✅ Listo para Recojo</button>`;
+                }
+            }
+
+            if (role === 'REPARTIDOR' && order.status === 'LISTO_PARA_RETIRAR' && order.deliveryType === 'DELIVERY') {
+                return `<button class="btn-action btn-delivery" onclick="advanceOrder('${order.orderId}', 'delivery')">🚀 Salir a Entregar</button>`;
+            }
+
+            return '';
+        }
+
+        // Avanzar pedido
+        async function advanceOrder(orderId, endpoint) {
+            try {
+                const response = await fetch(`${API_URL}/orders/${orderId}/${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    loadOrders();
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.error);
+                }
+            } catch (error) {
+                alert('Error de conexión: ' + error.message);
+            }
+        }
+
+        // Marcar como completado (PICKUP)
+        async function markAsCompleted(orderId) {
+            try {
+                const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'ENTREGADO' })
+                });
+
+                if (response.ok) {
+                    loadOrders();
+                } else {
+                    alert('Error al completar pedido');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('edoUser');
+            clearInterval(pollingInterval);
+            location.reload();
+        }
+
+        // Auto-login si hay sesión guardada
+        window.addEventListener('load', () => {
+            const savedUser = localStorage.getItem('edoUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showDashboard();
+            }
+        });
+    </script>
+</body>
+
+</html>
