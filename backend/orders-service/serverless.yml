@@ -45,6 +45,31 @@ functions:
           method: put
           cors: true
 
+  # Funciones para cada estado del workflow
+  processKitchen:
+    handler: handler.processKitchen
+    events:
+      - http:
+          path: orders/{orderId}/kitchen
+          method: post
+          cors: true
+
+  processPacking:
+    handler: handler.processPacking
+    events:
+      - http:
+          path: orders/{orderId}/packing
+          method: post
+          cors: true
+
+  processDelivery:
+    handler: handler.processDelivery
+    events:
+      - http:
+          path: orders/{orderId}/delivery
+          method: post
+          cors: true
+
 resources:
   Resources:
     # EventBridge Bus

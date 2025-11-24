@@ -36,8 +36,8 @@ def createOrder(event, context):
             },
             'items': data['items'],
             'total': Decimal(str(data['total'])),
-            'deliveryType': data.get('deliveryType', 'RECOJO'),  # DELIVERY o RECOJO
-            'status': 'RECIBIDO',
+            'deliveryType': data.get('deliveryType', 'DELIVERY'),  # DELIVERY o PICKUP
+            'status': 'CONFIRMADO',
             'receiptUrl': '',  # Se llenará después por receipt-service
             'createdAt': datetime.utcnow().isoformat(),
             'updatedAt': datetime.utcnow().isoformat()
@@ -166,7 +166,7 @@ def updateOrderStatus(event, context):
         new_status = data['status']
         
         # Validar estados permitidos
-        valid_statuses = ['RECIBIDO', 'EN_COCINA', 'EMPACANDO', 'EN_DELIVERY', 'COMPLETADO']
+        valid_statuses = ['CONFIRMADO', 'EN_PREPARACION', 'LISTO_PARA_RETIRAR', 'EN_CAMINO', 'ENTREGADO']
         if new_status not in valid_statuses:
             return {
                 'statusCode': 400,
@@ -196,6 +196,140 @@ def updateOrderStatus(event, context):
                 'message': 'Estado actualizado',
                 'orderId': order_id,
                 'newStatus': new_status
+            })
+        }
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': str(e)})
+        }
+
+def processKitchen(event, context):
+    """
+    Procesa el pedido en cocina y actualiza estado a EN_COCINA
+    POST /orders/{orderId}/kitchen
+    """
+    try:
+        order_id = event['pathParameters']['orderId']
+        
+        # Actualizar estado a EN_PREPARACION
+        orders_table.update_item(
+            Key={'orderId': order_id},
+            UpdateExpression='SET #status = :status, updatedAt = :updated',
+            ExpressionAttributeNames={'#status': 'status'},
+            ExpressionAttributeValues={
+                ':status': 'EN_PREPARACION',
+                ':updated': datetime.utcnow().isoformat()
+            }
+        )
+        
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            },
+            'body': json.dumps({
+                'message': 'Pedido en preparación',
+                'orderId': order_id,
+                'status': 'EN_PREPARACION'
+            })
+        }
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': str(e)})
+        }
+
+def processPacking(event, context):
+    """
+    Marca el pedido como listo para retirar
+    POST /orders/{orderId}/packing
+    """
+    try:
+        order_id = event['pathParameters']['orderId']
+        
+        # Actualizar estado a LISTO_PARA_RETIRAR
+        orders_table.update_item(
+            Key={'orderId': order_id},
+            UpdateExpression='SET #status = :status, updatedAt = :updated',
+            ExpressionAttributeNames={'#status': 'status'},
+            ExpressionAttributeValues={
+                ':status': 'LISTO_PARA_RETIRAR',
+                ':updated': datetime.utcnow().isoformat()
+            }
+        )
+        
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            },
+            'body': json.dumps({
+                'message': 'Pedido listo para retirar',
+                'orderId': order_id,
+                'status': 'LISTO_PARA_RETIRAR'
+            })
+        }
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': str(e)})
+        }
+
+def processDelivery(event, context):
+    """
+    Marca el pedido como en camino (solo para DELIVERY)
+    POST /orders/{orderId}/delivery
+    """
+    try:
+        order_id = event['pathParameters']['orderId']
+        
+        # Verificar que sea DELIVERY
+        response = orders_table.get_item(Key={'orderId': order_id})
+        if 'Item' not in response:
+            return {
+                'statusCode': 404,
+                'headers': {'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Pedido no encontrado'})
+            }
+        
+        order = response['Item']
+        if order.get('deliveryType') != 'DELIVERY':
+            return {
+                'statusCode': 400,
+                'headers': {'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Este pedido es PICKUP, no puede estar en camino'})
+            }
+        
+        # Actualizar estado a EN_CAMINO
+        orders_table.update_item(
+            Key={'orderId': order_id},
+            UpdateExpression='SET #status = :status, updatedAt = :updated',
+            ExpressionAttributeNames={'#status': 'status'},
+            ExpressionAttributeValues={
+                ':status': 'EN_CAMINO',
+                ':updated': datetime.utcnow().isoformat()
+            }
+        )
+        
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            },
+            'body': json.dumps({
+                'message': 'Pedido en camino',
+                'orderId': order_id,
+                'status': 'EN_CAMINO'
             })
         }
     except Exception as e:
