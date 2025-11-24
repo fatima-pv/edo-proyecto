@@ -82,69 +82,78 @@ resources:
     # Step Functions State Machine
     EdoOrderWorkflow:
       Type: AWS::StepFunctions::StateMachine
+      DependsOn:
+        - WaitForKitchenLambdaFunction
+        - WaitForPackingLambdaFunction
+        - WaitForDeliveryLambdaFunction
       Properties:
         StateMachineName: EdoOrderWorkflow
         RoleArn: arn:aws:iam::076456812464:role/LabRole
-        DefinitionString: !Sub |
-          {
-            "Comment": "Edo Order Workflow",
-            "StartAt": "OrderReceived",
-            "States": {
-              "OrderReceived": {
-                "Type": "Pass",
-                "Result": "Order received",
-                "Next": "WaitForKitchen"
-              },
-              "WaitForKitchen": {
-                "Type": "Task",
-                "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
-                "Parameters": {
-                  "FunctionName": "${WaitForKitchenLambdaFunction.Arn}",
-                  "Payload": {
-                    "orderId.$": "$.orderId",
-                    "taskToken.$": "$$.Task.Token"
+        DefinitionString:
+          Fn::Sub:
+            - |
+              {
+                "Comment": "Edo Order Workflow",
+                "StartAt": "OrderReceived",
+                "States": {
+                  "OrderReceived": {
+                    "Type": "Pass",
+                    "Result": "Order received",
+                    "Next": "WaitForKitchen"
+                  },
+                  "WaitForKitchen": {
+                    "Type": "Task",
+                    "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+                    "Parameters": {
+                      "FunctionName": "${WaitForKitchenArn}",
+                      "Payload": {
+                        "orderId.$": "$.orderId",
+                        "taskToken.$": "$$.Task.Token"
+                      }
+                    },
+                    "Next": "InKitchen"
+                  },
+                  "InKitchen": {
+                    "Type": "Pass",
+                    "Result": "In kitchen",
+                    "Next": "WaitForPacking"
+                  },
+                  "WaitForPacking": {
+                    "Type": "Task",
+                    "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+                    "Parameters": {
+                      "FunctionName": "${WaitForPackingArn}",
+                      "Payload": {
+                        "orderId.$": "$.orderId",
+                        "taskToken.$": "$$.Task.Token"
+                      }
+                    },
+                    "Next": "Packing"
+                  },
+                  "Packing": {
+                    "Type": "Pass",
+                    "Result": "Packing",
+                    "Next": "WaitForDelivery"
+                  },
+                  "WaitForDelivery": {
+                    "Type": "Task",
+                    "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+                    "Parameters": {
+                      "FunctionName": "${WaitForDeliveryArn}",
+                      "Payload": {
+                        "orderId.$": "$.orderId",
+                        "taskToken.$": "$$.Task.Token"
+                      }
+                    },
+                    "Next": "Completed"
+                  },
+                  "Completed": {
+                    "Type": "Pass",
+                    "Result": "Order completed",
+                    "End": true
                   }
-                },
-                "Next": "InKitchen"
-              },
-              "InKitchen": {
-                "Type": "Pass",
-                "Result": "In kitchen",
-                "Next": "WaitForPacking"
-              },
-              "WaitForPacking": {
-                "Type": "Task",
-                "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
-                "Parameters": {
-                  "FunctionName": "${WaitForPackingLambdaFunction.Arn}",
-                  "Payload": {
-                    "orderId.$": "$.orderId",
-                    "taskToken.$": "$$.Task.Token"
-                  }
-                },
-                "Next": "Packing"
-              },
-              "Packing": {
-                "Type": "Pass",
-                "Result": "Packing",
-                "Next": "WaitForDelivery"
-              },
-              "WaitForDelivery": {
-                "Type": "Task",
-                "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
-                "Parameters": {
-                  "FunctionName": "${WaitForDeliveryLambdaFunction.Arn}",
-                  "Payload": {
-                    "orderId.$": "$.orderId",
-                    "taskToken.$": "$$.Task.Token"
-                  }
-                },
-                "Next": "Completed"
-              },
-              "Completed": {
-                "Type": "Pass",
-                "Result": "Order completed",
-                "End": true
+                }
               }
-            }
-          }
+            - WaitForKitchenArn: !GetAtt WaitForKitchenLambdaFunction.Arn
+              WaitForPackingArn: !GetAtt WaitForPackingLambdaFunction.Arn
+              WaitForDeliveryArn: !GetAtt WaitForDeliveryLambdaFunction.Arn
