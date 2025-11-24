@@ -129,13 +129,17 @@ def getOrder(event, context):
         
         order = response['Item']
         
-        # Retornar solo información pública
+        # Retornar información completa para el tracking
         public_data = {
             'orderId': order['orderId'],
             'status': order['status'],
             'receiptUrl': order.get('receiptUrl', ''),
             'createdAt': order.get('createdAt', ''),
-            'deliveryType': order.get('deliveryType', 'RECOJO')
+            'deliveryType': order.get('deliveryType', 'RECOJO'),
+            'customerName': order.get('customerName', 'Cliente'),
+            'total': order.get('total', 0),
+            'items': order.get('items', []),
+            'address': order.get('address', '')
         }
         
         return {

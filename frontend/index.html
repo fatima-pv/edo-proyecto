@@ -819,6 +819,139 @@
     .toast.show {
       transform: translateX(-50%) translateY(0);
     }
+
+    /* --- ORDER TRACKING --- */
+    .tracking-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .order-success {
+      text-align: center;
+      background: #1a1a1a;
+      padding: 40px;
+      border-radius: 12px;
+      border: 1px solid #333;
+      margin-bottom: 30px;
+    }
+
+    .success-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+    }
+
+    .order-id-display {
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      font-weight: bold;
+      margin: 20px 0;
+      font-family: monospace;
+    }
+
+    .tracking-search {
+      background: #1a1a1a;
+      padding: 30px;
+      border-radius: 12px;
+      border: 1px solid #333;
+      margin-bottom: 30px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 15px;
+      background: #0a0a0a;
+      border: 1px solid #333;
+      color: #fff;
+      border-radius: 8px;
+      font-size: 1rem;
+      margin-bottom: 15px;
+    }
+
+    .order-status-tracker {
+      background: #1a1a1a;
+      padding: 40px;
+      border-radius: 12px;
+      border: 1px solid #333;
+    }
+
+    .status-steps {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+      margin: 40px 0;
+    }
+
+    .status-step {
+      flex: 1;
+      text-align: center;
+      position: relative;
+    }
+
+    .step-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #333;
+      color: #666;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 15px;
+      font-size: 1.5rem;
+      position: relative;
+      z-index: 2;
+      transition: all 0.3s;
+    }
+
+    .step-icon.active {
+      background: var(--accent-color);
+      color: #000;
+    }
+
+    .step-icon.completed {
+      background: #4caf50;
+      color: #fff;
+    }
+
+    .step-label {
+      font-size: 0.9rem;
+      color: #888;
+    }
+
+    .step-label.active {
+      color: var(--accent-color);
+      font-weight: 600;
+    }
+
+    .step-time {
+      font-size: 0.75rem;
+      color: #666;
+      margin-top: 5px;
+    }
+
+    .status-line {
+      position: absolute;
+      top: 30px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #333;
+      z-index: 1;
+    }
+
+    .status-line-progress {
+      height: 100%;
+      background: var(--accent-color);
+      transition: width 0.5s;
+    }
+
+    .order-details-card {
+      background: #0a0a0a;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
   </style>
 </head>
 
@@ -839,6 +972,7 @@
       <li class="nav-item"><a class="nav-link" onclick="showMenu('Sashimi')">Sashimi</a></li>
       <li class="nav-item"><a class="nav-link" onclick="showMenu('Nigiri')">Nigiri</a></li>
       <li class="nav-item"><a class="nav-link" onclick="showMenu('Bebidas')">Bebidas</a></li>
+      <li class="nav-item"><a class="nav-link" onclick="showTracking()">🔍 Seguimiento</a></li>
     </ul>
   </nav>
 
@@ -1049,6 +1183,72 @@
               <button class="btn-checkout" onclick="finalizeOrder()">REALIZAR PEDIDO</button>
               <button class="btn-back" onclick="backToCart()">Volver al Carrito</button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRACKING VIEW -->
+    <div id="view-tracking" class="view-section">
+      <div class="tracking-container">
+        <!-- Search for Order -->
+        <div id="tracking-search-section" class="tracking-search">
+          <h2 class="section-title" style="margin-top: 0;">Seguimiento de Pedido</h2>
+          <p style="text-align: center; color: #888; margin-bottom: 20px;">Ingresa el ID de tu pedido para ver su estado
+          </p>
+          <input type="text" id="order-search-input" class="search-input" placeholder="Ejemplo: ORD-261">
+          <button class="btn-checkout" onclick="searchOrder()">Buscar Pedido</button>
+        </div>
+
+        <!-- Order Status Display -->
+        <div id="order-status-display" style="display: none;">
+          <div class="order-status-tracker">
+            <h3 style="color: var(--accent-color); margin-bottom: 10px;">Pedido <span id="tracked-order-id"></span></h3>
+            <p style="color: #888; margin-bottom: 30px;">Estado actual: <span id="current-status-text"
+                style="color: var(--accent-color);"></span></p>
+
+            <div class="status-steps">
+              <div class="status-line">
+                <div class="status-line-progress" id="progress-bar"></div>
+              </div>
+
+              <div class="status-step" id="step-confirmado">
+                <div class="step-icon">✓</div>
+                <div class="step-label">Pedido Recibido</div>
+                <div class="step-time" id="time-confirmado"></div>
+              </div>
+
+              <div class="status-step" id="step-preparacion">
+                <div class="step-icon">🍳</div>
+                <div class="step-label">En Preparación</div>
+                <div class="step-time" id="time-preparacion"></div>
+              </div>
+
+              <div class="status-step" id="step-listo">
+                <div class="step-icon">📦</div>
+                <div class="step-label">Listo</div>
+                <div class="step-time" id="time-listo"></div>
+              </div>
+
+              <div class="status-step" id="step-camino">
+                <div class="step-icon">🏍️</div>
+                <div class="step-label">En Camino</div>
+                <div class="step-time" id="time-camino"></div>
+              </div>
+
+              <div class="status-step" id="step-entregado">
+                <div class="step-icon">✅</div>
+                <div class="step-label">Entregado</div>
+                <div class="step-time" id="time-entregado"></div>
+              </div>
+            </div>
+
+            <div class="order-details-card">
+              <h4 style="color: var(--accent-color); margin-bottom: 15px;">Detalles del Pedido</h4>
+              <div id="order-details-content"></div>
+            </div>
+
+            <button class="btn-back" onclick="showTracking()" style="margin-top: 20px;">Buscar Otro Pedido</button>
           </div>
         </div>
       </div>
@@ -1701,7 +1901,9 @@
         });
 
         if (res.ok) {
-          showToast("¡Pedido Realizado Exitosamente! 🚀");
+          const orderData = await res.json();
+          const orderId = orderData.orderId || orderData.order?.orderId;
+
           cart = [];
           updateCartUI();
 
@@ -1714,14 +1916,158 @@
           document.getElementById('address').value = '';
           document.getElementById('reference').value = '';
 
-          // Go back to home
-          setTimeout(() => showHome(), 2000);
+          // Show tracking view with the new order
+          if (orderId) {
+            showOrderTracking(orderId);
+          } else {
+            showToast("¡Pedido Realizado Exitosamente! 🚀");
+            setTimeout(() => showHome(), 2000);
+          }
         } else {
           alert("Error enviando pedido");
         }
       } catch (e) {
         console.error(e);
         alert("Error de conexión");
+      }
+    }
+
+    // --- Tracking Functions ---
+    function showTracking() {
+      document.getElementById('view-home').classList.remove('active');
+      document.getElementById('view-menu').classList.remove('active');
+      document.getElementById('view-checkout').classList.remove('active');
+      document.getElementById('view-tracking').classList.add('active');
+      document.getElementById('page-title').textContent = "Seguimiento de Pedido";
+
+      // Reset tracking view
+      document.getElementById('tracking-search-section').style.display = 'block';
+      document.getElementById('order-status-display').style.display = 'none';
+      document.getElementById('order-search-input').value = '';
+
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    }
+
+    async function searchOrder() {
+      const orderId = document.getElementById('order-search-input').value.trim();
+      if (!orderId) return alert("Por favor ingresa un ID de pedido");
+
+      showOrderTracking(orderId);
+    }
+
+    async function showOrderTracking(orderId) {
+      try {
+        const res = await fetch(`${ORDERS_API}/orders/${orderId}`);
+
+        if (!res.ok) {
+          alert("Pedido no encontrado");
+          return;
+        }
+
+        const order = await res.json();
+
+        // Show tracking view
+        document.getElementById('view-home').classList.remove('active');
+        document.getElementById('view-menu').classList.remove('active');
+        document.getElementById('view-checkout').classList.remove('active');
+        document.getElementById('view-tracking').classList.add('active');
+        document.getElementById('page-title').textContent = "Seguimiento de Pedido";
+
+        // Hide search, show status
+        document.getElementById('tracking-search-section').style.display = 'none';
+        document.getElementById('order-status-display').style.display = 'block';
+
+        // Store full orderId for API calls, display shortened version
+        window.currentTrackingOrderId = orderId;
+        document.getElementById('tracked-order-id').textContent = `#${orderId.substring(0, 8)}`;
+
+        // Render order status
+        renderOrderStatus(order);
+
+        // Start polling for updates using the full orderId
+        if (window.trackingInterval) clearInterval(window.trackingInterval);
+        window.trackingInterval = setInterval(() => refreshOrderStatus(orderId), 5000);
+
+      } catch (e) {
+        console.error(e);
+        alert("Error al buscar el pedido");
+      }
+    }
+
+    function renderOrderStatus(order) {
+      const status = order.status || 'CONFIRMADO';
+      const deliveryType = order.deliveryType || 'DELIVERY';
+
+      // Status mapping
+      const statusMap = {
+        'CONFIRMADO': { step: 0, label: 'Pedido Recibido' },
+        'EN_PREPARACION': { step: 1, label: 'En Preparación' },
+        'LISTO_PARA_RETIRAR': { step: 2, label: 'Listo' },
+        'EN_CAMINO': { step: 3, label: 'En Camino' },
+        'ENTREGADO': { step: 4, label: 'Entregado' }
+      };
+
+      const currentStep = statusMap[status]?.step || 0;
+      document.getElementById('current-status-text').textContent = statusMap[status]?.label || status;
+
+      // Reset all steps
+      document.querySelectorAll('.status-step').forEach(step => {
+        step.querySelector('.step-icon').classList.remove('active', 'completed');
+        step.querySelector('.step-label').classList.remove('active');
+      });
+
+      // Hide delivery step if PICKUP
+      if (deliveryType === 'PICKUP') {
+        document.getElementById('step-camino').style.display = 'none';
+      } else {
+        document.getElementById('step-camino').style.display = 'block';
+      }
+
+      // Update progress
+      const steps = ['confirmado', 'preparacion', 'listo', 'camino', 'entregado'];
+      const visibleSteps = deliveryType === 'PICKUP' ? steps.filter(s => s !== 'camino') : steps;
+
+      visibleSteps.forEach((stepId, idx) => {
+        const stepEl = document.getElementById(`step-${stepId}`);
+        const icon = stepEl.querySelector('.step-icon');
+        const label = stepEl.querySelector('.step-label');
+
+        if (idx < currentStep) {
+          icon.classList.add('completed');
+        } else if (idx === currentStep) {
+          icon.classList.add('active');
+          label.classList.add('active');
+        }
+      });
+
+      // Update progress bar
+      const progressPercent = (currentStep / (visibleSteps.length - 1)) * 100;
+      document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+
+      // Render order details
+      const detailsHtml = `
+        <p><strong>Cliente:</strong> ${order.customerName || order.customer?.name || 'N/A'}</p>
+        <p><strong>Tipo:</strong> ${deliveryType === 'DELIVERY' ? 'Delivery' : 'Recojo en Local'}</p>
+        ${deliveryType === 'DELIVERY' ? `<p><strong>Dirección:</strong> ${order.address || order.customer?.address || 'N/A'}</p>` : ''}
+        <p><strong>Total:</strong> S/. ${order.total?.toFixed(2) || '0.00'}</p>
+      `;
+      document.getElementById('order-details-content').innerHTML = detailsHtml;
+    }
+
+    async function refreshOrderStatus(orderId) {
+      try {
+        const res = await fetch(`${ORDERS_API}/orders/${orderId}`);
+        if (res.ok) {
+          const order = await res.json();
+          renderOrderStatus(order);
+
+          // Stop polling if delivered
+          if (order.status === 'ENTREGADO') {
+            clearInterval(window.trackingInterval);
+          }
+        }
+      } catch (e) {
+        console.error('Error refreshing order:', e);
       }
     }
 
