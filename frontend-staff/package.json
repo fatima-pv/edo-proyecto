@@ -1,0 +1,9 @@
+{
+    "name": "edo-staff-portal",
+    "version": "1.0.0",
+    "description": "Edo Sushi Bar - Staff Portal",
+    "scripts": {
+        "dev": "python3 -m http.server 8081",
+        "start": "python3 -m http.server 8081"
+    }
+}

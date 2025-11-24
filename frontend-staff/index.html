@@ -13,14 +13,14 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #000000;
             color: #ffffff;
             min-height: 100vh;
         }
 
-        /* Login Screen */
-        .login-container {
+        /* Auth Screens */
+        .auth-container {
             display: flex;
             justify-content: center;
             align-items: center;
@@ -28,21 +28,21 @@
             padding: 20px;
         }
 
-        .login-box {
-            background: rgba(0, 0, 0, 0.8);
+        .auth-box {
+            background: #1a1a1a;
             padding: 40px;
-            border-radius: 20px;
-            border: 2px solid #d4af37;
-            box-shadow: 0 8px 32px rgba(212, 175, 55, 0.3);
+            border-radius: 12px;
+            border: 1px solid #333;
             max-width: 400px;
             width: 100%;
         }
 
-        .login-box h1 {
-            color: #d4af37;
+        .auth-box h1 {
+            color: #ffffff;
             text-align: center;
             margin-bottom: 30px;
-            font-size: 28px;
+            font-size: 24px;
+            font-weight: 600;
         }
 
         .form-group {
@@ -52,19 +52,25 @@
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            color: #d4af37;
-            font-weight: 500;
+            color: #cccccc;
+            font-size: 14px;
         }
 
         .form-group input,
         .form-group select {
             width: 100%;
             padding: 12px;
-            border: 1px solid #d4af37;
+            border: 1px solid #333;
             border-radius: 8px;
-            background: rgba(255, 255, 255, 0.1);
+            background: #0a0a0a;
             color: #ffffff;
-            font-size: 16px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #666;
         }
 
         .form-group select option {
@@ -72,27 +78,46 @@
             color: #ffffff;
         }
 
-        .btn-login {
+        .btn-primary {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
-            color: #1a1a1a;
+            background: #ffffff;
+            color: #000000;
             border: none;
             border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: background 0.2s;
         }
 
-        .btn-login:hover {
-            transform: translateY(-2px);
+        .btn-primary:hover {
+            background: #e0e0e0;
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            color: #888;
+            font-size: 14px;
+        }
+
+        .auth-switch a {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-switch a:hover {
+            text-decoration: underline;
         }
 
         /* Dashboard */
         .dashboard {
             display: none;
             padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
         .dashboard.active {
@@ -100,19 +125,19 @@
         }
 
         .header {
-            background: rgba(0, 0, 0, 0.8);
+            background: #1a1a1a;
             padding: 20px;
             border-radius: 12px;
             margin-bottom: 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 1px solid #d4af37;
+            border: 1px solid #333;
         }
 
         .header h1 {
-            color: #d4af37;
-            font-size: 24px;
+            font-size: 20px;
+            font-weight: 600;
         }
 
         .user-info {
@@ -122,21 +147,27 @@
         }
 
         .role-badge {
-            background: #d4af37;
-            color: #1a1a1a;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: bold;
+            background: #ffffff;
+            color: #000000;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
         }
 
         .btn-logout {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
+            background: transparent;
+            color: #ffffff;
+            border: 1px solid #333;
+            padding: 8px 16px;
+            border-radius: 6px;
             cursor: pointer;
-            font-weight: bold;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .btn-logout:hover {
+            border-color: #666;
         }
 
         /* Orders Board */
@@ -146,16 +177,10 @@
         }
 
         .order-card {
-            background: rgba(0, 0, 0, 0.6);
-            border: 2px solid #d4af37;
+            background: #1a1a1a;
+            border: 1px solid #333;
             border-radius: 12px;
             padding: 20px;
-            transition: transform 0.2s;
-        }
-
-        .order-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4);
         }
 
         .order-header {
@@ -164,40 +189,40 @@
             align-items: center;
             margin-bottom: 15px;
             padding-bottom: 15px;
-            border-bottom: 1px solid #d4af37;
+            border-bottom: 1px solid #333;
         }
 
         .order-id {
             font-size: 12px;
-            color: #d4af37;
+            color: #888;
             font-family: monospace;
         }
 
         .order-status {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
         }
 
         .status-CONFIRMADO {
             background: #ffc107;
-            color: #1a1a1a;
+            color: #000;
         }
 
         .status-EN_PREPARACION {
             background: #ff9800;
-            color: #1a1a1a;
+            color: #000;
         }
 
         .status-LISTO_PARA_RETIRAR {
             background: #4caf50;
-            color: white;
+            color: #fff;
         }
 
         .status-EN_CAMINO {
             background: #2196f3;
-            color: white;
+            color: #fff;
         }
 
         .order-details {
@@ -206,43 +231,44 @@
 
         .order-details p {
             margin: 8px 0;
-            color: #e0e0e0;
+            color: #cccccc;
+            font-size: 14px;
         }
 
         .order-details strong {
-            color: #d4af37;
+            color: #ffffff;
         }
 
         .delivery-badge {
             display: inline-block;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
             margin-left: 8px;
         }
 
         .delivery-DELIVERY {
             background: #2196f3;
-            color: white;
+            color: #fff;
         }
 
         .delivery-PICKUP {
             background: #9c27b0;
-            color: white;
+            color: #fff;
         }
 
         .order-items {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 10px;
+            background: #0a0a0a;
+            padding: 12px;
             border-radius: 8px;
             margin: 10px 0;
         }
 
         .order-items h4 {
-            color: #d4af37;
+            color: #ffffff;
             margin-bottom: 8px;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .order-items ul {
@@ -252,7 +278,7 @@
 
         .order-items li {
             padding: 4px 0;
-            color: #e0e0e0;
+            color: #cccccc;
             font-size: 13px;
         }
 
@@ -261,67 +287,111 @@
             padding: 12px;
             border: none;
             border-radius: 8px;
-            font-weight: bold;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
-            font-size: 14px;
-        }
-
-        .btn-action:hover {
-            transform: translateY(-2px);
+            font-size: 13px;
         }
 
         .btn-kitchen {
-            background: linear-gradient(135deg, #ff9800 0%, #ff5722 100%);
-            color: white;
+            background: #ff9800;
+            color: #000;
         }
 
         .btn-packing {
-            background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
-            color: white;
+            background: #4caf50;
+            color: #fff;
         }
 
         .btn-delivery {
-            background: linear-gradient(135deg, #2196f3 0%, #03a9f4 100%);
-            color: white;
+            background: #2196f3;
+            color: #fff;
         }
 
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: #888;
+            color: #666;
         }
 
         .empty-state h3 {
-            font-size: 24px;
+            font-size: 18px;
             margin-bottom: 10px;
         }
 
         .loading {
             text-align: center;
             padding: 40px;
-            color: #d4af37;
-            font-size: 18px;
+            color: #888;
+            font-size: 14px;
+        }
+
+        .error-message {
+            background: #dc3545;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
         }
     </style>
 </head>
 
 <body>
     <!-- Login Screen -->
-    <div id="loginScreen" class="login-container">
-        <div class="login-box">
+    <div id="loginScreen" class="auth-container">
+        <div class="auth-box">
             <h1>🍣 Edo Staff Portal</h1>
+            <div id="loginError" class="error-message" style="display: none;"></div>
             <form id="loginForm">
                 <div class="form-group">
                     <label>Email</label>
-                    <input type="email" id="emailInput" placeholder="tu@email.com" required>
+                    <input type="email" id="loginEmail" placeholder="tu@email.com" required>
                 </div>
                 <div class="form-group">
                     <label>Contraseña</label>
-                    <input type="password" id="passwordInput" placeholder="••••••••" required>
+                    <input type="password" id="loginPassword" placeholder="••••••••" required>
                 </div>
-                <button type="submit" class="btn-login">Iniciar Sesión</button>
+                <button type="submit" class="btn-primary">Iniciar Sesión</button>
             </form>
+            <div class="auth-switch">
+                ¿No tienes cuenta? <a href="#" onclick="showRegister(); return false;">Regístrate</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Screen -->
+    <div id="registerScreen" class="auth-container" style="display: none;">
+        <div class="auth-box">
+            <h1>🍣 Registro de Staff</h1>
+            <div id="registerError" class="error-message" style="display: none;"></div>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="registerName" placeholder="Juan Pérez" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="registerEmail" placeholder="tu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="registerPassword" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label>Ocupación</label>
+                    <select id="registerRole" required>
+                        <option value="">Selecciona tu rol</option>
+                        <option value="ADMIN">Administrador</option>
+                        <option value="COCINERO">Cocinero</option>
+                        <option value="DESPACHADOR">Despachador</option>
+                        <option value="REPARTIDOR">Repartidor</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">Registrarse</button>
+            </form>
+            <div class="auth-switch">
+                ¿Ya tienes cuenta? <a href="#" onclick="showLogin(); return false;">Inicia sesión</a>
+            </div>
         </div>
     </div>
 
@@ -342,18 +412,61 @@
     </div>
 
     <script>
-        // ⚙️ CONFIGURACIÓN - Cambia esta URL por tu API
+        // ⚙️ CONFIGURACIÓN
         const API_URL = 'https://xrz56m3gci.execute-api.us-east-1.amazonaws.com/dev';
-        const AUTH_URL = 'TU_URL_AUTH_AQUI'; // URL del users-service
+        const AUTH_URL = 'https://n79mgedf2e.execute-api.us-east-1.amazonaws.com/dev';
 
         let currentUser = null;
         let pollingInterval = null;
 
+        // Show/Hide screens
+        function showLogin() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('registerScreen').style.display = 'none';
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        function showRegister() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('registerScreen').style.display = 'flex';
+            document.getElementById('registerError').style.display = 'none';
+        }
+
+        // Register
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const role = document.getElementById('registerRole').value;
+
+            try {
+                const response = await fetch(`${AUTH_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password, role })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Registro exitoso. Ahora puedes iniciar sesión.');
+                    showLogin();
+                } else {
+                    document.getElementById('registerError').textContent = data.error || 'Error al registrarse';
+                    document.getElementById('registerError').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('registerError').textContent = 'Error de conexión';
+                document.getElementById('registerError').style.display = 'block';
+            }
+        });
+
         // Login
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('emailInput').value;
-            const password = document.getElementById('passwordInput').value;
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
 
             try {
                 const response = await fetch(`${AUTH_URL}/auth/login`, {
@@ -369,16 +482,19 @@
                     localStorage.setItem('edoUser', JSON.stringify(currentUser));
                     showDashboard();
                 } else {
-                    alert(data.error || 'Error al iniciar sesión');
+                    document.getElementById('loginError').textContent = data.error || 'Error al iniciar sesión';
+                    document.getElementById('loginError').style.display = 'block';
                 }
             } catch (error) {
-                alert('Error de conexión: ' + error.message);
+                document.getElementById('loginError').textContent = 'Error de conexión';
+                document.getElementById('loginError').style.display = 'block';
             }
         });
 
-        // Mostrar Dashboard
+        // Show Dashboard
         function showDashboard() {
             document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('registerScreen').style.display = 'none';
             document.getElementById('dashboard').classList.add('active');
             document.getElementById('userName').textContent = currentUser.name;
             document.getElementById('userRole').textContent = currentUser.role;
@@ -387,7 +503,7 @@
             pollingInterval = setInterval(loadOrders, 5000);
         }
 
-        // Cargar pedidos
+        // Load orders
         async function loadOrders() {
             try {
                 const response = await fetch(`${API_URL}/orders`);
@@ -400,7 +516,7 @@
             }
         }
 
-        // Filtrar pedidos según rol
+        // Filter orders by role
         function filterOrdersByRole(orders) {
             const role = currentUser.role;
 
@@ -418,7 +534,7 @@
             }
         }
 
-        // Renderizar pedidos
+        // Render orders
         function renderOrders(orders) {
             const container = document.getElementById('ordersContainer');
 
@@ -456,7 +572,7 @@
             `).join('');
         }
 
-        // Obtener botón de acción según rol y estado
+        // Get action button
         function getActionButton(order) {
             const role = currentUser.role;
 
@@ -483,7 +599,7 @@
             return '';
         }
 
-        // Avanzar pedido
+        // Advance order
         async function advanceOrder(orderId, endpoint) {
             try {
                 const response = await fetch(`${API_URL}/orders/${orderId}/${endpoint}`, {
@@ -502,7 +618,7 @@
             }
         }
 
-        // Marcar como completado (PICKUP)
+        // Mark as completed
         async function markAsCompleted(orderId) {
             try {
                 const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
@@ -528,7 +644,7 @@
             location.reload();
         }
 
-        // Auto-login si hay sesión guardada
+        // Auto-login
         window.addEventListener('load', () => {
             const savedUser = localStorage.getItem('edoUser');
             if (savedUser) {

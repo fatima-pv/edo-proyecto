@@ -168,7 +168,6 @@
       align-items: center;
       gap: 10px;
       transition: transform 0.2s;
-      box-shadow: 0 0 15px rgba(244, 197, 66, 0.3);
     }
 
     .cart-btn:hover {
@@ -344,7 +343,6 @@
       height: 200px;
       background-size: cover;
       background-position: center;
-      /* Curve effect */
       clip-path: ellipse(150% 100% at 50% 0%);
       margin-bottom: 15px;
     }
@@ -382,7 +380,6 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
       height: 2.8em;
-      /* Fixed height for alignment */
     }
 
     .card-price {
@@ -403,7 +400,6 @@
       text-transform: uppercase;
       font-size: 0.9rem;
       transition: all 0.3s;
-      box-shadow: 0 5px 15px rgba(244, 197, 66, 0.4);
     }
 
     .btn-order:hover {
@@ -437,20 +433,11 @@
       overflow-x: hidden;
       border: 1px solid #333;
       position: relative;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     }
 
-    /* Hide scrollbar but keep functionality */
     .modal-content::-webkit-scrollbar {
       width: 0;
       background: transparent;
-    }
-
-    .modal-content {
-      scrollbar-width: none;
-      /* Firefox */
-      -ms-overflow-style: none;
-      /* IE/Edge */
     }
 
     .modal-close {
@@ -536,7 +523,6 @@
       top: 0;
       height: 100%;
       z-index: 100;
-      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
     }
 
     .cart-sidebar.open {
@@ -618,41 +604,200 @@
       color: #fff;
     }
 
-    .input-field {
-      width: 100%;
-      padding: 15px;
-      background: #2a2a2a;
-      border: 1px solid #444;
-      color: #fff;
-      border-radius: 10px;
-      margin-bottom: 15px;
-      font-size: 1rem;
+    /* --- CHECKOUT SECTION --- */
+    .checkout-container {
+      padding: 40px;
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
-    .input-field:focus {
+    .checkout-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 40px;
+    }
+
+    .checkout-section {
+      background: #1a1a1a;
+      padding: 30px;
+      border-radius: 12px;
+      border: 1px solid #333;
+    }
+
+    .checkout-title {
+      color: var(--accent-color);
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      color: #888;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px;
+      background: #0a0a0a;
+      border: 1px solid #333;
+      color: #fff;
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+
+    .form-input:focus {
       outline: none;
       border-color: var(--accent-color);
     }
 
-    /* --- Kitchen Zone (Bottom) --- */
-    .kitchen-panel {
-      position: fixed;
-      bottom: 0;
-      left: 0;
+    .form-select {
       width: 100%;
-      height: 350px;
-      background: #111;
-      border-top: 3px solid var(--accent-color);
-      z-index: 200;
-      padding: 30px;
-      transform: translateY(100%);
-      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-      overflow-y: auto;
-      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+      padding: 12px;
+      background: #0a0a0a;
+      border: 1px solid #333;
+      color: #fff;
+      border-radius: 8px;
+      font-size: 0.95rem;
     }
 
-    .kitchen-panel.open {
-      transform: translateY(0);
+    .delivery-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .delivery-option {
+      background: #0a0a0a;
+      border: 2px solid #333;
+      padding: 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .delivery-option:hover {
+      border-color: #555;
+    }
+
+    .delivery-option.selected {
+      border-color: var(--accent-color);
+      background: rgba(244, 197, 66, 0.1);
+    }
+
+    .delivery-option input[type="radio"] {
+      display: none;
+    }
+
+    .delivery-icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .delivery-label {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .invoice-options {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .invoice-option {
+      flex: 1;
+      background: #0a0a0a;
+      border: 2px solid #333;
+      padding: 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .invoice-option:hover {
+      border-color: #555;
+    }
+
+    .invoice-option.selected {
+      border-color: var(--accent-color);
+      background: rgba(244, 197, 66, 0.1);
+    }
+
+    .invoice-option input[type="radio"] {
+      display: none;
+    }
+
+    .order-summary {
+      background: #0a0a0a;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      color: #ccc;
+      font-size: 0.95rem;
+    }
+
+    .summary-total {
+      display: flex;
+      justify-content: space-between;
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: var(--accent-color);
+      padding-top: 15px;
+      border-top: 1px solid #333;
+      margin-top: 15px;
+    }
+
+    .btn-checkout {
+      width: 100%;
+      padding: 18px;
+      background: var(--accent-color);
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.3s;
+    }
+
+    .btn-checkout:hover {
+      background: #d4a82c;
+      transform: translateY(-2px);
+    }
+
+    .btn-back {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      color: #888;
+      border: 1px solid #333;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-bottom: 15px;
+    }
+
+    .btn-back:hover {
+      border-color: #555;
+      color: #fff;
     }
 
     /* Toast */
@@ -668,7 +813,6 @@
       font-weight: bold;
       transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 2000;
-      box-shadow: 0 10px 30px rgba(244, 197, 66, 0.4);
       font-size: 1.1rem;
     }
 
@@ -696,12 +840,6 @@
       <li class="nav-item"><a class="nav-link" onclick="showMenu('Nigiri')">Nigiri</a></li>
       <li class="nav-item"><a class="nav-link" onclick="showMenu('Bebidas')">Bebidas</a></li>
     </ul>
-
-    <div class="sidebar-footer">
-      <button class="btn-kitchen" onclick="toggleKitchen()">
-        👨‍🍳 Cocina
-      </button>
-    </div>
   </nav>
 
   <!-- Main Content -->
@@ -760,8 +898,159 @@
     <!-- MENU VIEW -->
     <div id="view-menu" class="view-section">
       <div id="products-grid" class="products-grid">
-        <!-- Products injected here -->
         <div style="color:white; grid-column: 1/-1; text-align:center;">Cargando carta...</div>
+      </div>
+    </div>
+
+    <!-- CHECKOUT VIEW -->
+    <div id="view-checkout" class="view-section">
+      <div class="checkout-container">
+        <h2 class="section-title">Finalizar Compra</h2>
+        <div class="checkout-grid">
+          <!-- Left Column: Form -->
+          <div>
+            <!-- Delivery Type -->
+            <div class="checkout-section">
+              <h3 class="checkout-title">Tipo de Entrega</h3>
+              <div class="delivery-options">
+                <div class="delivery-option selected" onclick="selectDeliveryType('DELIVERY')">
+                  <input type="radio" name="deliveryType" value="DELIVERY" checked>
+                  <div class="delivery-icon">🏍️</div>
+                  <div class="delivery-label">Delivery</div>
+                </div>
+                <div class="delivery-option" onclick="selectDeliveryType('PICKUP')">
+                  <input type="radio" name="deliveryType" value="PICKUP">
+                  <div class="delivery-icon">🏪</div>
+                  <div class="delivery-label">Recojo en Local</div>
+                </div>
+              </div>
+
+              <!-- Delivery Address -->
+              <div id="delivery-fields">
+                <div class="form-group">
+                  <label class="form-label">Dirección</label>
+                  <input type="text" id="address" class="form-input" placeholder="Calle, número, distrito">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Referencia</label>
+                  <input type="text" id="reference" class="form-input" placeholder="Edificio, piso, etc.">
+                </div>
+              </div>
+
+              <!-- Pickup Location -->
+              <div id="pickup-fields" style="display: none;">
+                <div class="form-group">
+                  <label class="form-label">Selecciona el Local</label>
+                  <select id="pickup-location" class="form-select">
+                    <option value="">Selecciona un local</option>
+                    <option value="MAGDALENA">Magdalena</option>
+                    <option value="MIRAFLORES">Miraflores</option>
+                    <option value="SAN BORJA - LA RAMBLA">San Borja - La Rambla</option>
+                    <option value="LA MOLINA">La Molina</option>
+                    <option value="BASADRE - SAN ISIDRO">Basadre - San Isidro</option>
+                    <option value="SURCO - TRIGAL">Surco - Trigal</option>
+                    <option value="SAN MIGUEL">San Miguel</option>
+                    <option value="SURCO - JOCKEY PLAZA">Surco - Jockey Plaza</option>
+                    <option value="AREQUIPA">Arequipa</option>
+                    <option value="SALAVERRY">Salaverry</option>
+                    <option value="SURCO - EL POLO">Surco - El Polo</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Customer Data -->
+            <div class="checkout-section">
+              <h3 class="checkout-title">Datos del Comprador</h3>
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="customer-email" class="form-input" placeholder="tu@email.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Número de Documento</label>
+                <input type="text" id="customer-dni" class="form-input" placeholder="DNI">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nombres</label>
+                <input type="text" id="customer-name" class="form-input" placeholder="Nombres">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Apellidos</label>
+                <input type="text" id="customer-lastname" class="form-input" placeholder="Apellidos">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Teléfono Celular</label>
+                <input type="tel" id="customer-phone" class="form-input" placeholder="999 999 999">
+              </div>
+            </div>
+
+            <!-- Invoice Type -->
+            <div class="checkout-section">
+              <h3 class="checkout-title">Comprobante de Pago</h3>
+              <div class="invoice-options">
+                <div class="invoice-option selected" onclick="selectInvoiceType('BOLETA')">
+                  <input type="radio" name="invoiceType" value="BOLETA" checked>
+                  <div style="font-weight: 600;">Boleta</div>
+                </div>
+                <div class="invoice-option" onclick="selectInvoiceType('FACTURA')">
+                  <input type="radio" name="invoiceType" value="FACTURA">
+                  <div style="font-weight: 600;">Factura</div>
+                </div>
+              </div>
+
+              <!-- Boleta Type -->
+              <div id="boleta-fields">
+                <div class="form-group">
+                  <label class="form-label">Tipo de Boleta</label>
+                  <select id="boleta-type" class="form-select">
+                    <option value="SIMPLE">Boleta Simple</option>
+                    <option value="ELECTRONICA">Boleta Electrónica</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Factura Fields -->
+              <div id="factura-fields" style="display: none;">
+                <div class="form-group">
+                  <label class="form-label">RUC</label>
+                  <input type="text" id="ruc" class="form-input" placeholder="20XXXXXXXXX">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Razón Social</label>
+                  <input type="text" id="razon-social" class="form-input" placeholder="Nombre de la empresa">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Dirección Fiscal</label>
+                  <input type="text" id="direccion-fiscal" class="form-input" placeholder="Dirección de la empresa">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Summary -->
+          <div>
+            <div class="checkout-section">
+              <h3 class="checkout-title">Tu Pedido</h3>
+              <div id="checkout-items" class="order-summary">
+                <!-- Items will be injected here -->
+              </div>
+              <div class="summary-item">
+                <span>Productos</span>
+                <span id="summary-subtotal">S/. 0.00</span>
+              </div>
+              <div class="summary-item">
+                <span>Envío</span>
+                <span id="summary-delivery">S/. 7.00</span>
+              </div>
+              <div class="summary-total">
+                <span>Total</span>
+                <span id="summary-total">S/. 0.00</span>
+              </div>
+              <button class="btn-checkout" onclick="finalizeOrder()">REALIZAR PEDIDO</button>
+              <button class="btn-back" onclick="backToCart()">Volver al Carrito</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </main>
@@ -781,8 +1070,7 @@
         <span>Total:</span>
         <span>S/. <span id="cart-total">0.00</span></span>
       </div>
-      <input type="text" id="customer-name" class="input-field" placeholder="Nombre del Cliente">
-      <button class="btn-add-cart" onclick="checkout()">CONFIRMAR PEDIDO</button>
+      <button class="btn-add-cart" onclick="goToCheckout()">IR A PAGAR</button>
     </div>
   </div>
 
@@ -804,22 +1092,6 @@
             id="modal-total">0.00</span></span>
         <button class="btn-order" onclick="confirmAddToCart()" style="padding:12px 40px; margin:0;">AGREGAR</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Kitchen Panel -->
-  <div id="kitchen-panel" class="kitchen-panel">
-    <div style="display:flex; justify-content:space-between; margin-bottom:30px;">
-      <h2 style="color:var(--accent-color); margin:0; font-size:2rem;">Comandas de Cocina</h2>
-      <div style="display:flex; gap:15px;">
-        <button onclick="fetchOrders()"
-          style="background:var(--accent-color); border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold;">Refrescar</button>
-        <button onclick="toggleKitchen()"
-          style="background:none; border:1px solid #555; color:#fff; padding:10px 20px; border-radius:8px; cursor:pointer;">Cerrar</button>
-      </div>
-    </div>
-    <div id="orders-list" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:25px;">
-      <!-- Orders -->
     </div>
   </div>
 
@@ -856,12 +1128,11 @@
 
     let allProducts = [];
     let cart = [];
-    let currentProduct = null; // For modal
+    let currentProduct = null;
 
     // --- Initialization ---
     async function init() {
       await fetchProducts();
-      fetchOrders(); // Load kitchen initially
     }
 
     async function fetchProducts() {
@@ -870,7 +1141,6 @@
         const res = await fetch(`${PRODUCTS_API}/products`);
         const data = await res.json();
 
-        // Fallback if empty
         if (!data || data.length === 0) {
           allProducts = [
             { id: '1', name: 'Acevichado', description: 'Clásico maki con salsa acevichada.', price: 25, category: 'Makis' },
@@ -897,7 +1167,6 @@
         const card = document.createElement('div');
         card.className = 'card';
 
-        // Determine if product needs options modal
         const isMaki = p.category === 'Makis' || p.category === 'Maki';
         const isCombo = p.category === 'Paquetes' || p.category === 'Promociones';
 
@@ -915,7 +1184,6 @@
       });
     }
 
-    // --- Direct Add to Cart (for Bebidas, etc.) ---
     function addDirectToCart(id) {
       const product = allProducts.find(p => p.id === id);
       if (!product) return;
@@ -938,6 +1206,7 @@
     function showHome() {
       document.getElementById('view-home').classList.add('active');
       document.getElementById('view-menu').classList.remove('active');
+      document.getElementById('view-checkout').classList.remove('active');
       document.getElementById('page-title').textContent = "Inicio";
       document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
     }
@@ -945,11 +1214,10 @@
     function showMenu(cat) {
       document.getElementById('view-home').classList.remove('active');
       document.getElementById('view-menu').classList.add('active');
+      document.getElementById('view-checkout').classList.remove('active');
       document.getElementById('page-title').textContent = cat === 'All' ? 'Nuestra Carta' : cat;
 
-      // Update active link
       document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-      // Find link with this category and activate it (simple match)
       const links = document.querySelectorAll('.nav-link');
       for (let l of links) {
         if (l.textContent.includes(cat) || (cat === 'All' && l.textContent.includes('Carta'))) {
@@ -977,7 +1245,6 @@
 
       const contentDiv = document.querySelector('.modal-content .option-group-container');
 
-      // Check if it's a Combo/Package
       if (currentProduct.category === 'Paquetes' || currentProduct.category === 'Promociones') {
         renderComboOptions(contentDiv);
       } else {
@@ -1025,19 +1292,68 @@
         `;
     }
 
-    // Mock Options for Combos (In a real app, this would come from the DB config)
     const COMBO_FLAVORS = ["Acevichado", "California", "Furai", "Shogun", "Samurai", "Parrillero", "Lau", "Ninja"];
 
     function renderComboOptions(container) {
       const comboSections = currentProduct.comboSections || [];
 
-      // Fallback to old logic if no comboSections defined
-      if (comboSections.length === 0) {
+      // Check if using new comboSections system
+      if (comboSections.length > 0) {
+        // NEW SYSTEM: Advanced combo configuration
+        let html = '';
+        comboSections.forEach((section, sectionIdx) => {
+          html += `<div class="option-group" style="margin-top:${sectionIdx > 0 ? '20px' : '0'};">`;
+          html += `<label class="option-label">${section.title}</label>`;
+
+          if (section.type === 'single-select') {
+            // Radio buttons for single selection
+            html += `<div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px;">`;
+            section.options.forEach((option, idx) => {
+              html += `
+                <label class="radio-option" style="margin:0;">
+                  <input type="radio" name="section-${sectionIdx}" value="${option}" ${idx === 0 ? 'checked' : ''}> ${option}
+                </label>
+              `;
+            });
+            html += `</div>`;
+          } else if (section.type === 'multi-select') {
+            // Counter-based multi-selection
+            const maxSel = section.maxSelections || 1;
+            html += `
+              <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <span style="color:#888; font-size:0.85rem;">Selecciona ${maxSel}</span>
+                <span id="counter-section-${sectionIdx}" style="color:var(--accent-color); font-weight:bold;">0/${maxSel}</span>
+              </div>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            `;
+            section.options.forEach(option => {
+              const optionId = option.replace(/\s+/g, '_');
+              html += `
+                <div style="background:#2a2a2a; padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-size:0.9rem;">${option}</span>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <button onclick="updateSectionCount(${sectionIdx}, '${option}', -1, ${maxSel})" style="background:#444; border:none; color:#fff; width:24px; height:24px; border-radius:50%; cursor:pointer;">-</button>
+                    <span id="count-${sectionIdx}-${optionId}" class="section-count" data-section="${sectionIdx}" data-option="${option}">0</span>
+                    <button onclick="updateSectionCount(${sectionIdx}, '${option}', 1, ${maxSel})" style="background:var(--accent-color); border:none; color:#000; width:24px; height:24px; border-radius:50%; cursor:pointer; font-weight:bold;">+</button>
+                  </div>
+                </div>
+              `;
+            });
+            html += `</div>`;
+            html += `<div id="error-section-${sectionIdx}" style="color:var(--danger-color); font-size:0.8rem; margin-top:10px; display:none;">Debes seleccionar exactamente ${maxSel}.</div>`;
+          }
+
+          html += `</div>`;
+        });
+
+        container.innerHTML = html;
+      } else {
+        // FALLBACK: Simple combo (old system)
         const maxSelection = currentProduct.maxSelections || 4;
         container.innerHTML = `
           <div class="option-group">
             <label class="option-label" style="display:flex; justify-content:space-between;">
-              <span>Escoge ${maxSelection} variedades de makis</span>
+              <span>Escoge ${maxSelection} makis (puedes repetir sabores)</span>
               <span id="combo-counter" style="color:var(--accent-color); font-weight:bold;">0/${maxSelection}</span>
             </label>
             <div id="combo-options-list" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
@@ -1052,62 +1368,13 @@
                 </div>
               `).join('')}
             </div>
-            <div id="combo-error" style="color:var(--danger-color); font-size:0.8rem; margin-top:10px; display:none;">Debes seleccionar exactamente ${maxSelection} variedades.</div>
+            <div id="combo-error" style="color:var(--danger-color); font-size:0.8rem; margin-top:10px; display:none;">Debes seleccionar exactamente ${maxSelection} makis.</div>
           </div>
         `;
-        return;
       }
-
-      // New dynamic rendering based on comboSections
-      let html = '';
-      comboSections.forEach((section, sectionIdx) => {
-        html += `<div class="option-group" style="margin-top:${sectionIdx > 0 ? '20px' : '0'};">`;
-        html += `<label class="option-label">${section.title}</label>`;
-
-        if (section.type === 'single-select') {
-          // Radio buttons for single selection in 4 columns
-          html += `<div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;">`;
-          section.options.forEach((option, idx) => {
-            html += `
-              <label class="radio-option" style="margin:0;">
-                <input type="radio" name="section-${sectionIdx}" value="${option}" ${idx === 0 ? 'checked' : ''}> ${option}
-              </label>
-            `;
-          });
-          html += `</div>`;
-        } else if (section.type === 'multi-select') {
-          // Counter-based multi-selection
-          const maxSel = section.maxSelections || 1;
-          html += `
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-              <span style="color:#888; font-size:0.85rem;">Selecciona ${maxSel}</span>
-              <span id="counter-section-${sectionIdx}" style="color:var(--accent-color); font-weight:bold;">0/${maxSel}</span>
-            </div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-          `;
-          section.options.forEach(option => {
-            html += `
-              <div style="background:#2a2a2a; padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:0.9rem;">${option}</span>
-                <div style="display:flex; align-items:center; gap:8px;">
-                  <button onclick="updateSectionCount(${sectionIdx}, '${option}', -1, ${maxSel})" style="background:#444; border:none; color:#fff; width:24px; height:24px; border-radius:50%; cursor:pointer;">-</button>
-                  <span id="count-${sectionIdx}-${option.replace(/\s+/g, '_')}" class="section-count" data-section="${sectionIdx}" data-option="${option}">0</span>
-                  <button onclick="updateSectionCount(${sectionIdx}, '${option}', 1, ${maxSel})" style="background:var(--accent-color); border:none; color:#000; width:24px; height:24px; border-radius:50%; cursor:pointer; font-weight:bold;">+</button>
-                </div>
-              </div>
-            `;
-          });
-          html += `</div>`;
-          html += `<div id="error-section-${sectionIdx}" style="color:var(--danger-color); font-size:0.8rem; margin-top:10px; display:none;">Debes seleccionar exactamente ${maxSel}.</div>`;
-        }
-
-        html += `</div>`;
-      });
-
-      container.innerHTML = html;
     }
 
-    // New function for section-based counting
+    // Function for section-based counting (comboSections)
     function updateSectionCount(sectionIdx, option, change, max) {
       const optionId = option.replace(/\s+/g, '_');
       const countSpan = document.getElementById(`count-${sectionIdx}-${optionId}`);
@@ -1137,21 +1404,18 @@
       const countSpan = document.getElementById(`count-${flavor}`);
       let current = parseInt(countSpan.textContent);
 
-      // Calculate total selected
       let totalSelected = 0;
       document.querySelectorAll('.flavor-count').forEach(el => totalSelected += parseInt(el.textContent));
 
-      if (change > 0 && totalSelected >= max) return; // Limit reached
-      if (change < 0 && current <= 0) return; // Cannot go below 0
+      if (change > 0 && totalSelected >= max) return;
+      if (change < 0 && current <= 0) return;
 
       current += change;
       countSpan.textContent = current;
 
-      // Update total counter
       totalSelected += change;
       document.getElementById('combo-counter').textContent = `${totalSelected}/${max}`;
 
-      // Hide error if valid
       if (totalSelected === max) document.getElementById('combo-error').style.display = 'none';
     }
 
@@ -1163,7 +1427,6 @@
       if (!currentProduct) return;
       let price = parseFloat(currentProduct.price);
 
-      // Only apply standard logic if NOT a combo
       if (currentProduct.category !== 'Paquetes' && currentProduct.category !== 'Promociones') {
         const cuts = document.querySelector('input[name="modal-cuts"]:checked');
         if (cuts && cuts.value === "10") price *= 1.8;
@@ -1187,7 +1450,7 @@
         const comboSections = currentProduct.comboSections || [];
 
         if (comboSections.length > 0) {
-          // New comboSections logic
+          // NEW SYSTEM: comboSections logic
           let allSelections = [];
           let isValid = true;
 
@@ -1226,7 +1489,7 @@
           cartItem.sauces = allSelections;
 
         } else {
-          // Old combo logic (fallback)
+          // OLD SYSTEM: Simple combo fallback
           const max = currentProduct.maxSelections || 4;
           let totalSelected = 0;
           let selectedFlavors = [];
@@ -1265,7 +1528,7 @@
       closeModal();
       updateCartUI();
       showToast("Agregado al carrito");
-      document.getElementById('cart-sidebar').classList.add('open'); // Auto open cart
+      document.getElementById('cart-sidebar').classList.add('open');
     }
 
     // --- Cart Logic ---
@@ -1304,72 +1567,161 @@
       updateCartUI();
     }
 
-    async function checkout() {
+    // --- Checkout Logic ---
+    function goToCheckout() {
       if (cart.length === 0) return alert("Carrito vacío");
-      const name = document.getElementById('customer-name').value;
-      if (!name) return alert("Ingresa tu nombre");
 
-      const total = cart.reduce((sum, i) => sum + i.price, 0);
-      const items = cart.map(i => {
-        let desc = `${i.product.name} (${i.cuts}c, ${i.filling})`;
-        if (i.sauces.length) desc += ` [${i.sauces.join('+')}]`;
-        return desc;
+      // Hide other views
+      document.getElementById('view-home').classList.remove('active');
+      document.getElementById('view-menu').classList.remove('active');
+      document.getElementById('view-checkout').classList.add('active');
+      document.getElementById('page-title').textContent = "Checkout";
+
+      // Close cart
+      document.getElementById('cart-sidebar').classList.remove('open');
+
+      // Render checkout summary
+      renderCheckoutSummary();
+    }
+
+    function renderCheckoutSummary() {
+      const container = document.getElementById('checkout-items');
+      container.innerHTML = '';
+
+      cart.forEach(item => {
+        const div = document.createElement('div');
+        div.style.cssText = "margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #333;";
+        div.innerHTML = `
+          <div style="font-weight: 600; margin-bottom: 5px;">${item.product.name}</div>
+          <div style="font-size: 0.85rem; color: #888;">${item.cuts} cortes • ${item.filling}</div>
+          <div style="font-size: 0.85rem; color: #888;">${item.sauces.join(', ')}</div>
+          <div style="color: var(--accent-color); font-weight: 600; margin-top: 5px;">S/. ${item.price.toFixed(2)}</div>
+        `;
+        container.appendChild(div);
       });
+
+      updateCheckoutTotals();
+    }
+
+    function updateCheckoutTotals() {
+      const subtotal = cart.reduce((sum, i) => sum + i.price, 0);
+      const deliveryType = document.querySelector('input[name="deliveryType"]:checked').value;
+      const deliveryCost = deliveryType === 'DELIVERY' ? 7.00 : 0.00;
+      const total = subtotal + deliveryCost;
+
+      document.getElementById('summary-subtotal').textContent = `S/. ${subtotal.toFixed(2)}`;
+      document.getElementById('summary-delivery').textContent = deliveryType === 'DELIVERY' ? 'S/. 7.00' : 'Gratis';
+      document.getElementById('summary-total').textContent = `S/. ${total.toFixed(2)}`;
+    }
+
+    function selectDeliveryType(type) {
+      document.querySelectorAll('.delivery-option').forEach(el => el.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+      document.querySelector(`input[name="deliveryType"][value="${type}"]`).checked = true;
+
+      if (type === 'DELIVERY') {
+        document.getElementById('delivery-fields').style.display = 'block';
+        document.getElementById('pickup-fields').style.display = 'none';
+      } else {
+        document.getElementById('delivery-fields').style.display = 'none';
+        document.getElementById('pickup-fields').style.display = 'block';
+      }
+
+      updateCheckoutTotals();
+    }
+
+    function selectInvoiceType(type) {
+      document.querySelectorAll('.invoice-option').forEach(el => el.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+      document.querySelector(`input[name="invoiceType"][value="${type}"]`).checked = true;
+
+      if (type === 'BOLETA') {
+        document.getElementById('boleta-fields').style.display = 'block';
+        document.getElementById('factura-fields').style.display = 'none';
+      } else {
+        document.getElementById('boleta-fields').style.display = 'none';
+        document.getElementById('factura-fields').style.display = 'block';
+      }
+    }
+
+    function backToCart() {
+      document.getElementById('view-checkout').classList.remove('active');
+      document.getElementById('view-menu').classList.add('active');
+      document.getElementById('cart-sidebar').classList.add('open');
+    }
+
+    async function finalizeOrder() {
+      // Validate form
+      const deliveryType = document.querySelector('input[name="deliveryType"]:checked').value;
+      const email = document.getElementById('customer-email').value;
+      const dni = document.getElementById('customer-dni').value;
+      const name = document.getElementById('customer-name').value;
+      const lastname = document.getElementById('customer-lastname').value;
+      const phone = document.getElementById('customer-phone').value;
+
+      if (!email || !dni || !name || !lastname || !phone) {
+        return alert("Por favor completa todos los campos del comprador");
+      }
+
+      let address = "";
+      if (deliveryType === 'DELIVERY') {
+        address = document.getElementById('address').value;
+        const reference = document.getElementById('reference').value;
+        if (!address) return alert("Por favor ingresa la dirección de entrega");
+        address += reference ? ` (${reference})` : '';
+      } else {
+        const location = document.getElementById('pickup-location').value;
+        if (!location) return alert("Por favor selecciona un local");
+        address = location;
+      }
+
+      const invoiceType = document.querySelector('input[name="invoiceType"]:checked').value;
+      const total = cart.reduce((sum, i) => sum + i.price, 0) + (deliveryType === 'DELIVERY' ? 7 : 0);
+
+      const items = cart.map(i => ({
+        product: {
+          name: i.product.name,
+          price: i.product.price
+        }
+      }));
 
       try {
         const res = await fetch(`${ORDERS_API}/orders`, {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            customerName: name,
+            customerName: `${name} ${lastname}`,
+            dni: dni,
+            email: email,
+            address: address,
+            deliveryType: deliveryType,
             items: items,
-            total: total,
-            salsas: []
+            total: total
           })
         });
 
         if (res.ok) {
-          showToast("Pedido Enviado! 🚀");
+          showToast("¡Pedido Realizado Exitosamente! 🚀");
           cart = [];
           updateCartUI();
+
+          // Clear form
+          document.getElementById('customer-email').value = '';
+          document.getElementById('customer-dni').value = '';
           document.getElementById('customer-name').value = '';
-          toggleCart();
-          fetchOrders(); // Refresh kitchen
+          document.getElementById('customer-lastname').value = '';
+          document.getElementById('customer-phone').value = '';
+          document.getElementById('address').value = '';
+          document.getElementById('reference').value = '';
+
+          // Go back to home
+          setTimeout(() => showHome(), 2000);
         } else {
           alert("Error enviando pedido");
         }
       } catch (e) {
         console.error(e);
         alert("Error de conexión");
-      }
-    }
-
-    // --- Kitchen Logic ---
-    function toggleKitchen() {
-      document.getElementById('kitchen-panel').classList.toggle('open');
-    }
-
-    async function fetchOrders() {
-      const list = document.getElementById('orders-list');
-      try {
-        const res = await fetch(`${ORDERS_API}/orders`);
-        const orders = await res.json();
-
-        list.innerHTML = '';
-        orders.reverse().forEach(o => {
-          const div = document.createElement('div');
-          div.style.cssText = "background:#222; padding:20px; border-radius:12px; border-left:4px solid var(--accent-color); color:#fff; box-shadow:0 5px 15px rgba(0,0,0,0.3);";
-          div.innerHTML = `
-                    <div style="font-weight:bold; font-size:1.1rem; margin-bottom:10px;">${o.customerName}</div>
-                    <div style="font-size:0.9rem; color:#aaa; margin-bottom:10px; line-height:1.4;">${o.items.join('<br>')}</div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #333; padding-top:10px;">
-                        <div style="font-weight:bold; color:var(--accent-color); font-size:1.1rem;">Total: S/. ${o.total}</div>
-                        <div style="font-size:0.8rem; background:#333; padding:4px 8px; border-radius:4px;">${o.status}</div>
-                    </div>
-                `;
-          list.appendChild(div);
-        });
-      } catch (e) {
-        console.error(e);
       }
     }
 
