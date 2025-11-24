@@ -207,22 +207,64 @@ def updateOrderStatus(event, context):
 
 def processKitchen(event, context):
     """
-    Procesa el pedido en cocina y actualiza estado a EN_COCINA
-    POST /orders/{orderId}/kitchen
+    Procesa el pedido en cocina y actualiza estado a EN_PREPARACION
+    Puede ser llamado por:
+    1. Step Functions (guarda taskToken)
+    2. HTTP POST (envía task success y avanza workflow)
     """
     try:
+        # Caso 1: Llamado por Step Functions (tiene taskToken)
+        if 'taskToken' in event:
+            order_id = event['orderId']
+            task_token = event['taskToken']
+            
+            # Guardar taskToken en DynamoDB
+            orders_table.update_item(
+                Key={'orderId': order_id},
+                UpdateExpression='SET taskToken = :token',
+                ExpressionAttributeValues={
+                    ':token': task_token
+                }
+            )
+            
+            return {'message': 'Task token saved, waiting for HTTP call'}
+        
+        # Caso 2: Llamado por HTTP (avanza el workflow)
         order_id = event['pathParameters']['orderId']
+        
+        # Obtener el taskToken guardado
+        response = orders_table.get_item(Key={'orderId': order_id})
+        if 'Item' not in response:
+            return {
+                'statusCode': 404,
+                'headers': {'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Pedido no encontrado'})
+            }
+        
+        order = response['Item']
+        task_token = order.get('taskToken', '')
         
         # Actualizar estado a EN_PREPARACION
         orders_table.update_item(
             Key={'orderId': order_id},
-            UpdateExpression='SET #status = :status, updatedAt = :updated',
+            UpdateExpression='SET #status = :status, taskToken = :empty, updatedAt = :updated',
             ExpressionAttributeNames={'#status': 'status'},
             ExpressionAttributeValues={
                 ':status': 'EN_PREPARACION',
+                ':empty': '',
                 ':updated': datetime.utcnow().isoformat()
             }
         )
+        
+        # Si hay taskToken, enviar success al Step Functions
+        if task_token:
+            try:
+                sfn_client.send_task_success(
+                    taskToken=task_token,
+                    output=json.dumps({'orderId': order_id, 'status': 'EN_PREPARACION'})
+                )
+            except Exception as e:
+                print(f"Error sending task success: {str(e)}")
         
         return {
             'statusCode': 200,
@@ -247,21 +289,56 @@ def processKitchen(event, context):
 def processPacking(event, context):
     """
     Marca el pedido como listo para retirar
-    POST /orders/{orderId}/packing
+    Puede ser llamado por Step Functions o HTTP
     """
     try:
-        order_id = event['pathParameters']['orderId']
+        # Caso 1: Llamado por Step Functions
+        if 'taskToken' in event:
+            order_id = event['orderId']
+            task_token = event['taskToken']
+            
+            orders_table.update_item(
+                Key={'orderId': order_id},
+                UpdateExpression='SET taskToken = :token',
+                ExpressionAttributeValues={':token': task_token}
+            )
+            return {'message': 'Task token saved'}
         
-        # Actualizar estado a LISTO_PARA_RETIRAR
+        # Caso 2: Llamado por HTTP
+        order_id = event['pathParameters']['orderId']
+        response = orders_table.get_item(Key={'orderId': order_id})
+        
+        if 'Item' not in response:
+            return {
+                'statusCode': 404,
+                'headers': {'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Pedido no encontrado'})
+            }
+        
+        order = response['Item']
+        task_token = order.get('taskToken', '')
+        
+        # Actualizar estado
         orders_table.update_item(
             Key={'orderId': order_id},
-            UpdateExpression='SET #status = :status, updatedAt = :updated',
+            UpdateExpression='SET #status = :status, taskToken = :empty, updatedAt = :updated',
             ExpressionAttributeNames={'#status': 'status'},
             ExpressionAttributeValues={
                 ':status': 'LISTO_PARA_RETIRAR',
+                ':empty': '',
                 ':updated': datetime.utcnow().isoformat()
             }
         )
+        
+        # Enviar success al Step Functions
+        if task_token:
+            try:
+                sfn_client.send_task_success(
+                    taskToken=task_token,
+                    output=json.dumps({'orderId': order_id, 'status': 'LISTO_PARA_RETIRAR', 'deliveryType': order.get('deliveryType', 'DELIVERY')})
+                )
+            except Exception as e:
+                print(f"Error sending task success: {str(e)}")
         
         return {
             'statusCode': 200,
@@ -286,13 +363,25 @@ def processPacking(event, context):
 def processDelivery(event, context):
     """
     Marca el pedido como en camino (solo para DELIVERY)
-    POST /orders/{orderId}/delivery
+    Puede ser llamado por Step Functions o HTTP
     """
     try:
-        order_id = event['pathParameters']['orderId']
+        # Caso 1: Llamado por Step Functions
+        if 'taskToken' in event:
+            order_id = event['orderId']
+            task_token = event['taskToken']
+            
+            orders_table.update_item(
+                Key={'orderId': order_id},
+                UpdateExpression='SET taskToken = :token',
+                ExpressionAttributeValues={':token': task_token}
+            )
+            return {'message': 'Task token saved'}
         
-        # Verificar que sea DELIVERY
+        # Caso 2: Llamado por HTTP
+        order_id = event['pathParameters']['orderId']
         response = orders_table.get_item(Key={'orderId': order_id})
+        
         if 'Item' not in response:
             return {
                 'statusCode': 404,
@@ -301,6 +390,8 @@ def processDelivery(event, context):
             }
         
         order = response['Item']
+        
+        # Verificar que sea DELIVERY
         if order.get('deliveryType') != 'DELIVERY':
             return {
                 'statusCode': 400,
@@ -308,16 +399,29 @@ def processDelivery(event, context):
                 'body': json.dumps({'error': 'Este pedido es PICKUP, no puede estar en camino'})
             }
         
-        # Actualizar estado a EN_CAMINO
+        task_token = order.get('taskToken', '')
+        
+        # Actualizar estado
         orders_table.update_item(
             Key={'orderId': order_id},
-            UpdateExpression='SET #status = :status, updatedAt = :updated',
+            UpdateExpression='SET #status = :status, taskToken = :empty, updatedAt = :updated',
             ExpressionAttributeNames={'#status': 'status'},
             ExpressionAttributeValues={
                 ':status': 'EN_CAMINO',
+                ':empty': '',
                 ':updated': datetime.utcnow().isoformat()
             }
         )
+        
+        # Enviar success al Step Functions
+        if task_token:
+            try:
+                sfn_client.send_task_success(
+                    taskToken=task_token,
+                    output=json.dumps({'orderId': order_id, 'status': 'EN_CAMINO'})
+                )
+            except Exception as e:
+                print(f"Error sending task success: {str(e)}")
         
         return {
             'statusCode': 200,
