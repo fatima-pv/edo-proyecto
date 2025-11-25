@@ -451,28 +451,3 @@ def processDelivery(event, context):
             'headers': {'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': str(e)})
         }
-
-def validateOrder(event, context):
-    """
-    Paso 1 del Workflow: Valida el pedido (Simulado)
-    """
-    print("Validando pedido...")
-    print(json.dumps(event))
-    
-    # En un caso real, aquí validaríamos stock, fraude, etc.
-    # Por ahora, simplemente pasamos el evento al siguiente paso
-    return event
-
-def notifyKitchen(event, context):
-    """
-    Paso 2 del Workflow: Notifica a cocina (Simulado)
-    """
-    print("Notificando a cocina...")
-    print(json.dumps(event))
-    
-    # Aquí podríamos enviar un SMS, Email o Slack
-    return {
-        'status': 'NOTIFIED',
-        'orderId': event.get('detail', {}).get('orderId', 'unknown'),
-        'timestamp': datetime.utcnow().isoformat()
-    }
