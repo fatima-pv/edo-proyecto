@@ -11,6 +11,9 @@ provider:
   environment:
     ORDERS_TABLE: EdoOrdersTable
     ORDER_BUS_NAME: EdoOrderBus
+  
+plugins:
+  - serverless-step-functions
 
 functions:
   createOrder:
@@ -69,6 +72,39 @@ functions:
           path: orders/{orderId}/delivery
           method: post
           cors: true
+
+  # Funciones para Step Functions
+  validateOrder:
+    handler: handler.validateOrder
+  
+  notifyKitchen:
+    handler: handler.notifyKitchen
+
+stepFunctions:
+  stateMachines:
+    OrderProcessingWorkflow:
+      name: EdoOrderProcessingWorkflow
+      events:
+        - eventBridge:
+            eventBus: EdoOrderBus
+            pattern:
+              source:
+                - edo.orders
+              detail-type:
+                - OrderCreated
+      definition:
+        StartAt: ValidateOrder
+        States:
+          ValidateOrder:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [validateOrder, Arn]
+            Next: NotifyKitchen
+          NotifyKitchen:
+            Type: Task
+            Resource:
+              Fn::GetAtt: [notifyKitchen, Arn]
+            End: true
 
 resources:
   Resources:

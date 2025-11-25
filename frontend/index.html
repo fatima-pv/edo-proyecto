@@ -2019,9 +2019,9 @@
         document.getElementById('tracking-search-section').style.display = 'none';
         document.getElementById('order-status-display').style.display = 'block';
 
-        // Store full orderId for API calls, display shortened version
+        // Store full orderId for API calls, display full version
         window.currentTrackingOrderId = orderId;
-        document.getElementById('tracked-order-id').textContent = `#${orderId.substring(0, 8)}`;
+        document.getElementById('tracked-order-id').textContent = `#${orderId}`;
 
         // Render order status
         renderOrderStatus(order);

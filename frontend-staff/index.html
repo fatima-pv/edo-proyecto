@@ -411,6 +411,14 @@
         </div>
     </div>
 
+    <!-- Admin Filter Controls (Hidden by default) -->
+    <div id="adminControls"
+        style="display: none; max-width: 1400px; margin: 0 auto 20px; padding: 0 20px; text-align: right;">
+        <label style="color: #ccc; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" id="showAllOrders" onchange="loadOrders()"> Ver todos los pedidos
+        </label>
+    </div>
+
     <script>
         // ⚙️ CONFIGURACIÓN
         const API_URL = 'https://xrz56m3gci.execute-api.us-east-1.amazonaws.com/dev';
@@ -499,6 +507,13 @@
             document.getElementById('userName').textContent = currentUser.name;
             document.getElementById('userRole').textContent = currentUser.role;
 
+            // Show admin controls if admin
+            if (currentUser.role === 'ADMIN') {
+                document.getElementById('adminControls').style.display = 'block';
+            } else {
+                document.getElementById('adminControls').style.display = 'none';
+            }
+
             loadOrders();
             pollingInterval = setInterval(loadOrders, 5000);
         }
@@ -519,16 +534,18 @@
         // Filter orders by role
         function filterOrdersByRole(orders) {
             const role = currentUser.role;
+            const showAll = document.getElementById('showAllOrders').checked;
 
             switch (role) {
                 case 'ADMIN':
+                    if (showAll) return orders;
                     return orders.filter(o => o.status === 'CONFIRMADO');
                 case 'COCINERO':
-                    return orders.filter(o => o.status === 'CONFIRMADO' || o.status === 'EN_PREPARACION');
+                    return orders.filter(o => o.status === 'EN_PREPARACION');
                 case 'DESPACHADOR':
                     return orders.filter(o => o.status === 'LISTO_PARA_RETIRAR');
                 case 'REPARTIDOR':
-                    return orders.filter(o => o.status === 'LISTO_PARA_RETIRAR' && o.deliveryType === 'DELIVERY');
+                    return orders.filter(o => o.status === 'EN_CAMINO');
                 default:
                     return [];
             }
@@ -576,24 +593,28 @@
         function getActionButton(order) {
             const role = currentUser.role;
 
-            if (role === 'COCINERO' && order.status === 'CONFIRMADO') {
-                return `<button class="btn-action btn-kitchen" onclick="advanceOrder('${order.orderId}', 'kitchen')">🍳 Marcar en Preparación</button>`;
+            // ADMIN: Solo puede enviar a cocina (iniciar el flujo)
+            if (role === 'ADMIN' && order.status === 'CONFIRMADO') {
+                return `<button class="btn-action btn-kitchen" onclick="advanceOrder('${order.orderId}', 'kitchen')">🍳 Enviar a Cocina</button>`;
             }
 
+            // COCINERO: Solo ve lo que está en preparación y lo manda a empaquetado
             if (role === 'COCINERO' && order.status === 'EN_PREPARACION') {
-                return `<button class="btn-action btn-packing" onclick="advanceOrder('${order.orderId}', 'packing')">📦 Platillo Terminado</button>`;
+                return `<button class="btn-action btn-packing" onclick="advanceOrder('${order.orderId}', 'packing')">📦 Platillo Terminado (A Empaquetado)</button>`;
             }
 
+            // DESPACHADOR: Ve lo que está listo para retirar/empacar
             if (role === 'DESPACHADOR' && order.status === 'LISTO_PARA_RETIRAR') {
                 if (order.deliveryType === 'DELIVERY') {
                     return `<button class="btn-action btn-delivery" onclick="advanceOrder('${order.orderId}', 'delivery')">🏍️ Asignar a Motorizado</button>`;
                 } else {
-                    return `<button class="btn-action btn-packing" onclick="markAsCompleted('${order.orderId}')">✅ Listo para Recojo</button>`;
+                    return `<button class="btn-action btn-packing" onclick="markAsCompleted('${order.orderId}')">✅ Entregado al Cliente</button>`;
                 }
             }
 
-            if (role === 'REPARTIDOR' && order.status === 'LISTO_PARA_RETIRAR' && order.deliveryType === 'DELIVERY') {
-                return `<button class="btn-action btn-delivery" onclick="advanceOrder('${order.orderId}', 'delivery')">🚀 Salir a Entregar</button>`;
+            // REPARTIDOR: Solo ve lo que está en camino
+            if (role === 'REPARTIDOR' && order.status === 'EN_CAMINO') {
+                return `<button class="btn-action btn-packing" onclick="markAsCompleted('${order.orderId}')">✅ Confirmar Entrega</button>`;
             }
 
             return '';
