@@ -153,7 +153,9 @@ def getOrder(event, context):
             'customerName': customer_name,
             'total': order.get('total', 0),
             'items': order.get('items', []),
-            'address': address
+            'items': order.get('items', []),
+            'address': address,
+            'timeline': order.get('timeline', [])
         }
         
         return {

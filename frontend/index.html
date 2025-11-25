@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
 
@@ -5,6 +6,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Edo Sushi Bar</title>
+  <link rel="icon"
+    href="https://scontent.flim1-2.fna.fbcdn.net/v/t39.30808-1/420455313_693477942962361_3477897331365371333_n.jpg?stp=dst-jpg_s480x480_tt6&_nc_cat=111&ccb=1-7&_nc_sid=2d3e12&_nc_ohc=e_WolTG31EkQ7kNvwEGwQGK&_nc_oc=AdkUd-ywjr8ZPM8cRUjVIA1DF8S0cy7jte7dTtzUX7CJfBVw8K2qIQgA5WbFqs8YD9g&_nc_zt=24&_nc_ht=scontent.flim1-2.fna&_nc_gid=d61cHBNKOk1G3prvjOnFxg&oh=00_AfgkSFk12KFz4fIZHuI3noKkhVV59PznzSUmWuJEt2d4TA&oe=692C0E13">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -953,9 +956,21 @@
       margin-top: 20px;
     }
 
-    .logo {
-      height: 40px;
+    .logo img {
+      height: 60px;
+      /* Aumentado de 40px */
       width: auto;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+      margin-bottom: 0;
     }
   </style>
 </head>
@@ -1105,20 +1120,24 @@
                 <input type="email" id="customer-email" class="form-input" placeholder="tu@email.com">
               </div>
               <div class="form-group">
-                <label class="form-label">Número de Documento</label>
-                <input type="text" id="customer-dni" class="form-input" placeholder="DNI">
+                <label class="form-label">DNI</label>
+                <input type="text" id="customer-dni" class="form-input" placeholder="8 dígitos" maxlength="8"
+                  oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8)">
               </div>
-              <div class="form-group">
-                <label class="form-label">Nombres</label>
-                <input type="text" id="customer-name" class="form-input" placeholder="Nombres">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Apellidos</label>
-                <input type="text" id="customer-lastname" class="form-input" placeholder="Apellidos">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Nombres</label>
+                  <input type="text" id="customer-name" class="form-input" placeholder="Tu nombre">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Apellidos</label>
+                  <input type="text" id="customer-lastname" class="form-input" placeholder="Tu apellido">
+                </div>
               </div>
               <div class="form-group">
                 <label class="form-label">Teléfono Celular</label>
-                <input type="tel" id="customer-phone" class="form-input" placeholder="999 999 999">
+                <input type="tel" id="customer-phone" class="form-input" placeholder="9 dígitos" maxlength="9"
+                  oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 9)">
               </div>
             </div>
 
@@ -1212,50 +1231,24 @@
                 style="color: var(--accent-color);"></span></p>
 
             <div class="status-steps">
-              <div class="status-line">
-                <div class="status-line-progress" id="progress-bar"></div>
-              </div>
-
-              <div class="status-step" id="step-confirmado">
-                <div class="step-icon">✓</div>
-                <div class="step-label">Pedido Recibido</div>
-                <div class="step-time" id="time-confirmado"></div>
-              </div>
-
-              <div class="status-step" id="step-preparacion">
-                <div class="step-icon">🍳</div>
-                <div class="step-label">En Preparación</div>
-                <div class="step-time" id="time-preparacion"></div>
-              </div>
-
-              <div class="status-step" id="step-listo">
-                <div class="step-icon">📦</div>
-                <div class="step-label">Listo</div>
-                <div class="step-time" id="time-listo"></div>
-              </div>
-
-              <div class="status-step" id="step-camino">
-                <div class="step-icon">🏍️</div>
-                <div class="step-label">En Camino</div>
-                <div class="step-time" id="time-camino"></div>
-              </div>
-
-              <div class="status-step" id="step-entregado">
-                <div class="step-icon">✅</div>
-                <div class="step-label">Entregado</div>
-                <div class="step-time" id="time-entregado"></div>
-              </div>
             </div>
 
-            <div class="order-details-card">
-              <h4 style="color: var(--accent-color); margin-bottom: 15px;">Detalles del Pedido</h4>
-              <div id="order-details-content"></div>
+            <div class="status-step" id="step-entregado">
+              <div class="step-icon">✅</div>
+              <div class="step-label">Entregado</div>
+              <div class="step-time" id="time-entregado"></div>
             </div>
-
-            <button class="btn-back" onclick="showTracking()" style="margin-top: 20px;">Buscar Otro Pedido</button>
           </div>
+
+          <div class="order-details-card">
+            <h4 style="color: var(--accent-color); margin-bottom: 15px;">Detalles del Pedido</h4>
+            <div id="order-details-content"></div>
+          </div>
+
+          <button class="btn-back" onclick="showTracking()" style="margin-top: 20px;">Buscar Otro Pedido</button>
         </div>
       </div>
+    </div>
     </div>
   </main>
 
@@ -1891,6 +1884,14 @@
         return alert("Por favor completa todos los campos del comprador");
       }
 
+      if (dni.length !== 8) {
+        return alert("El DNI debe tener exactamente 8 dígitos");
+      }
+
+      if (phone.length !== 9) {
+        return alert("El teléfono debe tener exactamente 9 dígitos");
+      }
+
       let address = "";
       if (deliveryType === 'DELIVERY') {
         address = document.getElementById('address').value;
@@ -1947,10 +1948,11 @@
           // Show success modal with order ID
           if (orderId) {
             document.getElementById('success-order-id').textContent = orderId;
+            document.querySelector('#success-modal h2').textContent = "¡Pedido Confirmado! ありがとう";
             document.getElementById('success-modal').style.display = 'flex';
             window.lastCreatedOrderId = orderId;
           } else {
-            showToast("¡Pedido Realizado Exitosamente! 🚀");
+            showToast("¡Pedido Realizado! ありがとう");
             setTimeout(() => showHome(), 2000);
           }
         } else {
@@ -2085,6 +2087,35 @@
           label.classList.add('active');
         }
       });
+
+      // Update status steps
+      const statusSteps = ['CONFIRMADO', 'EN_PREPARACION', 'LISTO_PARA_RETIRAR', 'EN_CAMINO', 'ENTREGADO'];
+      const currentStepIndex = statusSteps.indexOf(order.status);
+
+      const stepElements = document.querySelectorAll('.step');
+      stepElements.forEach((el, index) => {
+        if (index <= currentStepIndex) {
+          el.classList.add('active');
+        } else {
+          el.classList.remove('active');
+        }
+      });
+
+      // Render Timeline
+      const timelineContainer = document.getElementById('tracking-timeline');
+      if (timelineContainer) {
+        if (order.timeline && order.timeline.length > 0) {
+          timelineContainer.innerHTML = order.timeline.map(event => `
+            <div style="margin-bottom: 15px; border-left: 2px solid #333; padding-left: 15px; position: relative;">
+              <div style="position: absolute; left: -5px; top: 0; width: 8px; height: 8px; background: var(--accent-color); border-radius: 50%;"></div>
+              <div style="font-weight: 600; color: #fff; font-size: 14px;">${event.action} <span style="color: #888; font-weight: 400;">(${event.user})</span></div>
+              <div style="color: #666; font-size: 12px; margin-top: 4px;">${new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+            </div>
+          `).join('');
+        } else {
+          timelineContainer.innerHTML = '<div style="color: #666; font-size: 14px;">Esperando actualizaciones...</div>';
+        }
+      }
 
       // Update progress bar
       const progressPercent = (currentStep / (visibleSteps.length - 1)) * 100;
