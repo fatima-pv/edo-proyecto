@@ -333,6 +333,64 @@
             margin-bottom: 20px;
             font-size: 14px;
         }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: #888;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .tab-btn.active {
+            color: #fff;
+            border-bottom: 2px solid #fff;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 14px;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 
@@ -340,7 +398,10 @@
     <!-- Login Screen -->
     <div id="loginScreen" class="auth-container">
         <div class="auth-box">
-            <h1>🍣 Edo Staff Portal</h1>
+            <div style="text-align: center; margin-bottom: 30px;">
+                <img src="https://www.edosushibar.com/assets/img/logo-vertical.webp" alt="Edo Sushi Bar"
+                    style="height: 100px; width: auto;">
+            </div>
             <div id="loginError" class="error-message" style="display: none;"></div>
             <form id="loginForm">
                 <div class="form-group">
@@ -362,7 +423,10 @@
     <!-- Register Screen -->
     <div id="registerScreen" class="auth-container" style="display: none;">
         <div class="auth-box">
-            <h1>🍣 Registro de Staff</h1>
+            <div style="text-align: center; margin-bottom: 30px;">
+                <img src="https://www.edosushibar.com/assets/img/logo-vertical.webp" alt="Edo Sushi Bar"
+                    style="height: 100px; width: auto;">
+            </div>
             <div id="registerError" class="error-message" style="display: none;"></div>
             <form id="registerForm">
                 <div class="form-group">
@@ -398,7 +462,8 @@
     <!-- Dashboard -->
     <div id="dashboard" class="dashboard">
         <div class="header">
-            <h1>🍣 Edo Staff Portal</h1>
+            <img src="https://www.edosushibar.com/assets/img/logo-horizontal.webp" alt="Edo Sushi Bar"
+                style="height: 40px; width: auto;">
             <div class="user-info">
                 <span id="userName"></span>
                 <span id="userRole" class="role-badge"></span>
@@ -406,18 +471,50 @@
             </div>
         </div>
 
-        <div id="ordersContainer" class="orders-board">
-            <div class="loading">Cargando pedidos...</div>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('board')">📋 Tablero</button>
+            <button class="tab-btn" id="statsTabBtn" onclick="switchTab('stats')" style="display: none;">📊
+                Estadísticas</button>
+            <button class="tab-btn" id="historyTabBtn" onclick="switchTab('history')" style="display: none;">clock Mi
+                Historial</button>
+        </div>
+
+        <!-- Board View -->
+        <div id="boardView">
+            <div id="adminControls" style="display: none; text-align: right; margin-bottom: 20px;">
+                <label style="color: #ccc; font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="showAllOrders" onchange="loadOrders()"> Ver todos los pedidos
+                </label>
+            </div>
+            <div id="ordersContainer" class="orders-board">
+                <div class="loading">Cargando pedidos...</div>
+            </div>
+        </div>
+
+        <!-- Statistics View (Admin) -->
+        <div id="statsView" style="display: none;">
+            <div class="stats-grid" id="statsGrid">
+                <!-- Stats will be injected here -->
+            </div>
+        </div>
+
+        <!-- History View (Staff) -->
+        <div id="historyView" style="display: none;">
+            <div class="filters">
+                <select id="historyFilterType" onchange="renderHistory()">
+                    <option value="ALL">Todos los tipos</option>
+                    <option value="DELIVERY">Delivery</option>
+                    <option value="PICKUP">Recojo</option>
+                </select>
+                <input type="date" id="historyFilterDate" onchange="renderHistory()" style="width: auto;">
+            </div>
+            <div id="historyContainer" class="orders-board">
+                <!-- History will be injected here -->
+            </div>
         </div>
     </div>
 
-    <!-- Admin Filter Controls (Hidden by default) -->
-    <div id="adminControls"
-        style="display: none; max-width: 1400px; margin: 0 auto 20px; padding: 0 20px; text-align: right;">
-        <label style="color: #ccc; font-size: 14px; cursor: pointer;">
-            <input type="checkbox" id="showAllOrders" onchange="loadOrders()"> Ver todos los pedidos
-        </label>
-    </div>
+
 
     <script>
         // ⚙️ CONFIGURACIÓN
@@ -426,6 +523,7 @@
 
         let currentUser = null;
         let pollingInterval = null;
+        let allOrdersCache = [];
 
         // Show/Hide screens
         function showLogin() {
@@ -510,12 +608,36 @@
             // Show admin controls if admin
             if (currentUser.role === 'ADMIN') {
                 document.getElementById('adminControls').style.display = 'block';
+                document.getElementById('statsTabBtn').style.display = 'block';
             } else {
                 document.getElementById('adminControls').style.display = 'none';
+                document.getElementById('statsTabBtn').style.display = 'none';
+                document.getElementById('historyTabBtn').style.display = 'block';
             }
 
             loadOrders();
             pollingInterval = setInterval(loadOrders, 5000);
+        }
+
+        // Tab Switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('boardView').style.display = 'none';
+            document.getElementById('statsView').style.display = 'none';
+            document.getElementById('historyView').style.display = 'none';
+
+            if (tabName === 'board') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('boardView').style.display = 'block';
+            } else if (tabName === 'stats') {
+                document.getElementById('statsTabBtn').classList.add('active');
+                document.getElementById('statsView').style.display = 'block';
+                renderStatistics(allOrdersCache);
+            } else if (tabName === 'history') {
+                document.getElementById('historyTabBtn').classList.add('active');
+                document.getElementById('historyView').style.display = 'block';
+                renderHistory();
+            }
         }
 
         // Load orders
@@ -523,9 +645,18 @@
             try {
                 const response = await fetch(`${API_URL}/orders`);
                 const orders = await response.json();
+                allOrdersCache = orders;
 
                 const filteredOrders = filterOrdersByRole(orders);
                 renderOrders(filteredOrders);
+
+                // Update active view if needed
+                if (document.getElementById('statsView').style.display === 'block') {
+                    renderStatistics(orders);
+                }
+                if (document.getElementById('historyView').style.display === 'block') {
+                    renderHistory();
+                }
             } catch (error) {
                 console.error('Error cargando pedidos:', error);
             }
@@ -584,6 +715,19 @@
                             ${order.items.map(item => `<li>• ${item.product.name} - S/ ${item.product.price}</li>`).join('')}
                         </ul>
                     </div>
+
+                    <!-- Timeline Section -->
+                    <div class="order-timeline" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #333; font-size: 12px;">
+                        <h4 style="color: #888; margin-bottom: 5px;">Historial:</h4>
+                        ${(order.timeline || []).map(event => `
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #ccc;">
+                                <span>${event.action} (${event.user})</span>
+                                <span style="color: #666;">${new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                        `).join('')}
+                        ${(!order.timeline || order.timeline.length === 0) ? '<div style="color: #666;">Sin historial registrado</div>' : ''}
+                    </div>
+
                     ${getActionButton(order)}
                 </div>
             `).join('');
@@ -625,7 +769,13 @@
             try {
                 const response = await fetch(`${API_URL}/orders/${orderId}/${endpoint}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user: {
+                            name: currentUser.name,
+                            email: currentUser.email
+                        }
+                    })
                 });
 
                 if (response.ok) {
@@ -645,7 +795,13 @@
                 const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: 'ENTREGADO' })
+                    body: JSON.stringify({
+                        status: 'ENTREGADO',
+                        user: {
+                            name: currentUser.name,
+                            email: currentUser.email
+                        }
+                    })
                 });
 
                 if (response.ok) {
@@ -656,6 +812,95 @@
             } catch (error) {
                 alert('Error: ' + error.message);
             }
+        }
+
+        // Render Statistics
+        function renderStatistics(orders) {
+            const stats = {
+                total: orders.length,
+                confirmed: orders.filter(o => o.status === 'CONFIRMADO').length,
+                preparing: orders.filter(o => o.status === 'EN_PREPARACION').length,
+                ready: orders.filter(o => o.status === 'LISTO_PARA_RETIRAR').length,
+                delivery: orders.filter(o => o.status === 'EN_CAMINO').length,
+                completed: orders.filter(o => o.status === 'ENTREGADO').length,
+                revenue: orders.reduce((sum, o) => sum + parseFloat(o.total), 0)
+            };
+
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${stats.total}</div>
+                    <div class="stat-label">Total Pedidos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: #ffc107">${stats.confirmed}</div>
+                    <div class="stat-label">Pendientes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: #ff9800">${stats.preparing}</div>
+                    <div class="stat-label">En Cocina</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: #2196f3">${stats.delivery}</div>
+                    <div class="stat-label">En Camino</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: #4caf50">${stats.completed}</div>
+                    <div class="stat-label">Completados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">S/ ${stats.revenue.toFixed(2)}</div>
+                    <div class="stat-label">Ingresos Totales</div>
+                </div>
+            `;
+        }
+
+        // Render History
+        function renderHistory() {
+            const typeFilter = document.getElementById('historyFilterType').value;
+            const dateFilter = document.getElementById('historyFilterDate').value;
+
+            const myOrders = allOrdersCache.filter(order => {
+                // Check if current user is in timeline
+                const timeline = order.timeline || [];
+                const participated = timeline.some(event => event.user === currentUser.name);
+
+                // Also check if user is the one who created it (if admin/staff created it manually?) 
+                // For now rely on timeline.
+
+                if (!participated) return false;
+
+                // Apply filters
+                if (typeFilter !== 'ALL' && order.deliveryType !== typeFilter) return false;
+                if (dateFilter && !order.createdAt.startsWith(dateFilter)) return false;
+
+                return true;
+            });
+
+            const container = document.getElementById('historyContainer');
+            if (myOrders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>📜 No tienes historial</h3>
+                        <p>Aún no has procesado pedidos con estos filtros</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Reuse render logic but simpler
+            container.innerHTML = myOrders.map(order => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <span class="order-id">#${order.orderId.substring(0, 8)}</span>
+                        <span class="order-status status-${order.status}">${order.status}</span>
+                    </div>
+                    <div class="order-details">
+                        <p><strong>Cliente:</strong> ${order.customer.name}</p>
+                        <p><strong>Fecha:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
+                        <p><strong>Total:</strong> S/ ${order.total}</p>
+                    </div>
+                </div>
+            `).join('');
         }
 
         // Logout

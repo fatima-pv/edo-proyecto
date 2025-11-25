@@ -41,7 +41,15 @@ def createOrder(event, context):
             'status': 'CONFIRMADO',
             'receiptUrl': '',  # Se llenará después por receipt-service
             'createdAt': datetime.utcnow().isoformat(),
-            'updatedAt': datetime.utcnow().isoformat()
+            'updatedAt': datetime.utcnow().isoformat(),
+            'timeline': [
+                {
+                    'status': 'CONFIRMADO',
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'user': 'Cliente',
+                    'action': 'Pedido Creado'
+                }
+            ]
         }
         
         # Guardar en DynamoDB
@@ -254,15 +262,31 @@ def processKitchen(event, context):
         order = response['Item']
         task_token = order.get('taskToken', '')
         
-        # Actualizar estado a EN_PREPARACION
+        # Get user info from body
+        user_name = 'Cocina'
+        if 'body' in event and event['body']:
+            try:
+                body = json.loads(event['body'])
+                user_name = body.get('user', {}).get('name', 'Cocina')
+            except:
+                pass
+
+        # Actualizar estado a EN_PREPARACION y agregar timeline
         orders_table.update_item(
             Key={'orderId': order_id},
-            UpdateExpression='SET #status = :status, taskToken = :empty, updatedAt = :updated',
+            UpdateExpression='SET #status = :status, taskToken = :empty, updatedAt = :updated, timeline = list_append(if_not_exists(timeline, :empty_list), :new_event)',
             ExpressionAttributeNames={'#status': 'status'},
             ExpressionAttributeValues={
                 ':status': 'EN_PREPARACION',
                 ':empty': '',
-                ':updated': datetime.utcnow().isoformat()
+                ':updated': datetime.utcnow().isoformat(),
+                ':empty_list': [],
+                ':new_event': [{
+                    'status': 'EN_PREPARACION',
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'user': user_name,
+                    'action': 'Marcado en Preparación'
+                }]
             }
         )
         
@@ -328,15 +352,31 @@ def processPacking(event, context):
         order = response['Item']
         task_token = order.get('taskToken', '')
         
+        # Get user info from body
+        user_name = 'Empaquetado'
+        if 'body' in event and event['body']:
+            try:
+                body = json.loads(event['body'])
+                user_name = body.get('user', {}).get('name', 'Empaquetado')
+            except:
+                pass
+
         # Actualizar estado
         orders_table.update_item(
             Key={'orderId': order_id},
-            UpdateExpression='SET #status = :status, taskToken = :empty, updatedAt = :updated',
+            UpdateExpression='SET #status = :status, taskToken = :empty, updatedAt = :updated, timeline = list_append(if_not_exists(timeline, :empty_list), :new_event)',
             ExpressionAttributeNames={'#status': 'status'},
             ExpressionAttributeValues={
                 ':status': 'LISTO_PARA_RETIRAR',
                 ':empty': '',
-                ':updated': datetime.utcnow().isoformat()
+                ':updated': datetime.utcnow().isoformat(),
+                ':empty_list': [],
+                ':new_event': [{
+                    'status': 'LISTO_PARA_RETIRAR',
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'user': user_name,
+                    'action': 'Marcado Listo para Retirar'
+                }]
             }
         )
         
@@ -411,15 +451,31 @@ def processDelivery(event, context):
         
         task_token = order.get('taskToken', '')
         
+        # Get user info from body
+        user_name = 'Delivery'
+        if 'body' in event and event['body']:
+            try:
+                body = json.loads(event['body'])
+                user_name = body.get('user', {}).get('name', 'Delivery')
+            except:
+                pass
+
         # Actualizar estado
         orders_table.update_item(
             Key={'orderId': order_id},
-            UpdateExpression='SET #status = :status, taskToken = :empty, updatedAt = :updated',
+            UpdateExpression='SET #status = :status, taskToken = :empty, updatedAt = :updated, timeline = list_append(if_not_exists(timeline, :empty_list), :new_event)',
             ExpressionAttributeNames={'#status': 'status'},
             ExpressionAttributeValues={
                 ':status': 'EN_CAMINO',
                 ':empty': '',
-                ':updated': datetime.utcnow().isoformat()
+                ':updated': datetime.utcnow().isoformat(),
+                ':empty_list': [],
+                ':new_event': [{
+                    'status': 'EN_CAMINO',
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'user': user_name,
+                    'action': 'Marcado En Camino'
+                }]
             }
         )
         

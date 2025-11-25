@@ -952,6 +952,11 @@
       border-radius: 8px;
       margin-top: 20px;
     }
+
+    .logo {
+      height: 40px;
+      width: auto;
+    }
   </style>
 </head>
 
@@ -960,8 +965,7 @@
   <!-- Sidebar -->
   <nav class="sidebar">
     <div class="logo" onclick="showHome()">
-      <h1>EDO</h1>
-      <span>SUSHI BAR</span>
+      <img src="https://www.edosushibar.com/assets/img/logo-horizontal.webp" alt="Edo Sushi Bar" class="logo">
     </div>
     <ul class="nav-menu">
       <li class="nav-item"><a class="nav-link" onclick="showMenu('All')">Nuestra Carta</a></li>
@@ -1178,7 +1182,7 @@
               </div>
               <div class="summary-total">
                 <span>Total</span>
-                <span id="summary-total">S/. 0.00</span>
+                <span>S/. <span id="summary-total">0.00</span></span>
               </div>
               <button class="btn-checkout" onclick="finalizeOrder()">REALIZAR PEDIDO</button>
               <button class="btn-back" onclick="backToCart()">Volver al Carrito</button>
