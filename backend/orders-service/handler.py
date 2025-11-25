@@ -8,6 +8,7 @@ from datetime import datetime
 dynamodb = boto3.resource('dynamodb')
 orders_table = dynamodb.Table(os.environ['ORDERS_TABLE'])
 events_client = boto3.client('events')
+sfn_client = boto3.client('stepfunctions')
 
 class DecimalEncoder(json.JSONEncoder):
     def default(self, obj):
