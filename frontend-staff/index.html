@@ -173,6 +173,7 @@
         /* Orders Board */
         .orders-board {
             display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 20px;
         }
 
@@ -475,17 +476,26 @@
             <button class="tab-btn active" onclick="switchTab('board')">📋 Tablero</button>
             <button class="tab-btn" id="statsTabBtn" onclick="switchTab('stats')" style="display: none;">📊
                 Estadísticas</button>
-            <button class="tab-btn" id="historyTabBtn" onclick="switchTab('history')" style="display: none;">clock Mi
+            <button class="tab-btn" id="historyTabBtn" onclick="switchTab('history')" style="display: none;">🕐 Mi
                 Historial</button>
         </div>
 
         <!-- Board View -->
         <div id="boardView">
+            <!-- Admin Stats (shown only for admin) -->
+            <div id="adminStats" style="display: none; margin-bottom: 30px;">
+                <h2 style="color: #fff; margin-bottom: 20px; font-size: 20px;">📊 Estadísticas</h2>
+                <div class="stats-grid" id="statsGridMain">
+                    <!-- Stats will be injected here -->
+                </div>
+            </div>
+
             <div id="adminControls" style="display: none; text-align: right; margin-bottom: 20px;">
                 <label style="color: #ccc; font-size: 14px; cursor: pointer;">
                     <input type="checkbox" id="showAllOrders" onchange="loadOrders()"> Ver todos los pedidos
                 </label>
             </div>
+            <h2 style="color: #fff; margin-bottom: 20px; font-size: 20px;">📋 Pedidos Activos</h2>
             <div id="ordersContainer" class="orders-board">
                 <div class="loading">Cargando pedidos...</div>
             </div>
@@ -500,13 +510,16 @@
 
         <!-- History View (Staff) -->
         <div id="historyView" style="display: none;">
-            <div class="filters">
-                <select id="historyFilterType" onchange="renderHistory()">
+            <h2 style="color: #fff; margin-bottom: 20px; font-size: 20px;">🕐 Mi Historial</h2>
+            <div class="filters" style="margin-bottom: 20px;">
+                <select id="historyFilterType" onchange="renderHistory()"
+                    style="padding: 10px; background: #0a0a0a; color: #fff; border: 1px solid #333; border-radius: 6px;">
                     <option value="ALL">Todos los tipos</option>
                     <option value="DELIVERY">Delivery</option>
                     <option value="PICKUP">Recojo</option>
                 </select>
-                <input type="date" id="historyFilterDate" onchange="renderHistory()" style="width: auto;">
+                <input type="date" id="historyFilterDate" onchange="renderHistory()"
+                    style="padding: 10px; background: #0a0a0a; color: #fff; border: 1px solid #333; border-radius: 6px;">
             </div>
             <div id="historyContainer" class="orders-board">
                 <!-- History will be injected here -->
@@ -605,12 +618,14 @@
             document.getElementById('userName').textContent = currentUser.name;
             document.getElementById('userRole').textContent = currentUser.role;
 
-            // Show admin controls if admin
+            // Show admin controls and stats if admin
             if (currentUser.role === 'ADMIN') {
                 document.getElementById('adminControls').style.display = 'block';
-                document.getElementById('statsTabBtn').style.display = 'block';
+                document.getElementById('adminStats').style.display = 'block';
+                document.getElementById('statsTabBtn').style.display = 'none'; // Hide stats tab, show inline
             } else {
                 document.getElementById('adminControls').style.display = 'none';
+                document.getElementById('adminStats').style.display = 'none';
                 document.getElementById('statsTabBtn').style.display = 'none';
                 document.getElementById('historyTabBtn').style.display = 'block';
             }
@@ -632,7 +647,7 @@
             } else if (tabName === 'stats') {
                 document.getElementById('statsTabBtn').classList.add('active');
                 document.getElementById('statsView').style.display = 'block';
-                renderStatistics(allOrdersCache);
+                renderStatistics(allOrdersCache, 'statsGrid');
             } else if (tabName === 'history') {
                 document.getElementById('historyTabBtn').classList.add('active');
                 document.getElementById('historyView').style.display = 'block';
@@ -644,15 +659,20 @@
         async function loadOrders() {
             try {
                 const response = await fetch(`${API_URL}/orders`);
-                const orders = await response.json();
-                allOrdersCache = orders;
+                const ordersData = await response.json();
+                allOrdersCache = ordersData;
 
-                const filteredOrders = filterOrdersByRole(orders);
+                const filteredOrders = filterOrdersByRole(ordersData);
                 renderOrders(filteredOrders);
+
+                // Update admin stats if visible
+                if (document.getElementById('adminStats').style.display === 'block') {
+                    renderStatistics(ordersData, 'statsGridMain');
+                }
 
                 // Update active view if needed
                 if (document.getElementById('statsView').style.display === 'block') {
-                    renderStatistics(orders);
+                    renderStatistics(ordersData, 'statsGrid');
                 }
                 if (document.getElementById('historyView').style.display === 'block') {
                     renderHistory();
@@ -707,7 +727,7 @@
                         <p><strong>Total:</strong> S/ ${order.total}
                             <span class="delivery-badge delivery-${order.deliveryType}">${order.deliveryType}</span>
                         </p>
-                        ${order.deliveryType === 'DELIVERY' ? `<p><strong>Dirección:</strong> ${order.customer.address}</p>` : ''}
+                        ${order.deliveryType === 'DELIVERY' ? `<p><strong>Dirección:</strong> ${order.customer.address}</p>` : `<p><strong>Recojo en:</strong> ${order.customer.address || 'Local principal'}</p>`}
                     </div>
                     <div class="order-items">
                         <h4>Items:</h4>
@@ -815,7 +835,7 @@
         }
 
         // Render Statistics
-        function renderStatistics(orders) {
+        function renderStatistics(orders, targetId = 'statsGrid') {
             const stats = {
                 total: orders.length,
                 confirmed: orders.filter(o => o.status === 'CONFIRMADO').length,
@@ -823,10 +843,10 @@
                 ready: orders.filter(o => o.status === 'LISTO_PARA_RETIRAR').length,
                 delivery: orders.filter(o => o.status === 'EN_CAMINO').length,
                 completed: orders.filter(o => o.status === 'ENTREGADO').length,
-                revenue: orders.reduce((sum, o) => sum + parseFloat(o.total), 0)
+                revenue: orders.reduce((sum, o) => sum + parseFloat(o.total || 0), 0)
             };
 
-            document.getElementById('statsGrid').innerHTML = `
+            document.getElementById(targetId).innerHTML = `
                 <div class="stat-card">
                     <div class="stat-number">${stats.total}</div>
                     <div class="stat-label">Total Pedidos</div>
@@ -871,7 +891,10 @@
 
                 // Apply filters
                 if (typeFilter !== 'ALL' && order.deliveryType !== typeFilter) return false;
-                if (dateFilter && !order.createdAt.startsWith(dateFilter)) return false;
+                if (dateFilter) {
+                    const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
+                    if (orderDate !== dateFilter) return false;
+                }
 
                 return true;
             });
