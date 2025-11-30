@@ -1285,6 +1285,10 @@
             📄 DESCARGAR RECIBO
           </button>
 
+          <button class="btn-checkout" onclick="refreshCurrentOrder()" style="margin-top: 20px; background: #2196F3;">
+            🔄 ACTUALIZAR ESTADO
+          </button>
+
           <button class="btn-back" onclick="showTracking()" style="margin-top: 20px;">Buscar Otro Pedido</button>
         </div>
       </div>
@@ -2456,6 +2460,14 @@
         }
       } catch (e) {
         console.error('Error refreshing order:', e);
+      }
+    }
+
+    function refreshCurrentOrder() {
+      const orderId = document.getElementById('tracked-order-id').textContent.replace('#', '');
+      if (orderId) {
+        refreshOrderStatus(orderId);
+        showToast("Actualizando estado...");
       }
     }
 

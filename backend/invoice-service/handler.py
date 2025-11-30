@@ -45,8 +45,7 @@ def generateReceipt(event, context):
             Bucket=BUCKET_NAME,
             Key=file_key,
             Body=receipt_content,
-            ContentType='text/plain',
-            ACL='public-read'
+            ContentType='text/plain'
         )
         
         # Construct URL
