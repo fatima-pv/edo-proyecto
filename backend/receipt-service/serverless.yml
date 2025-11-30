@@ -13,6 +13,11 @@ provider:
     RECEIPTS_BUCKET: edo-receipts-${self:provider.stage}-fatima  # Adding name to ensure uniqueness
     ORDERS_TABLE: EdoOrdersTable
 
+package:
+  patterns:
+    - handler.py
+    - '!layers/**'
+
 functions:
   generateReceipt:
     handler: handler.generate_receipt
