@@ -811,31 +811,22 @@
       color: #fff;
     }
 
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%) translateY(150%);
-      background: var(--accent-color);
-      color: #000;
-      padding: 15px 40px;
-      border-radius: 40px;
-      font-weight: bold;
-      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-      z-index: 2000;
-      font-size: 1.1rem;
+    .form-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
     }
 
-    .toast.show {
-      transform: translateX(-50%) translateY(0);
+    .form-row .form-group {
+      flex: 1;
+      margin-bottom: 0;
     }
 
     /* --- ORDER TRACKING --- */
     .tracking-container {
       max-width: 800px;
       margin: 0 auto;
-      padding: 40px 20px;
+      padding: 20px;
     }
 
     .order-success {
@@ -1059,8 +1050,15 @@
     <!-- MENU VIEW -->
     <div id="view-menu" class="view-section">
       <div id="products-grid" class="products-grid">
-        <div style="color:white; grid-column: 1/-1; text-align:center;">Cargando carta...</div>
+        <!-- Products injected here -->
       </div>
+
+      <!-- Pagination Controls -->
+      <div id="pagination-controls" style="display: flex; justify-content: center; margin-top: 30px; gap: 10px;">
+        <!-- Pagination buttons injected here -->
+      </div>
+      <div style="color:white; grid-column: 1/-1; text-align:center;">Cargando carta...</div>
+    </div>
     </div>
 
     <!-- CHECKOUT VIEW -->
@@ -1334,7 +1332,7 @@
     </div>
   </div>
 
-  <div id="toast" class="toast">Pedido Agregado</div>
+
 
   <!-- Success Modal -->
   <div id="success-modal" class="modal-overlay">
@@ -1400,6 +1398,25 @@
 
     // --- Initialization ---
     async function init() {
+      // Load cart from localStorage
+      const savedCart = localStorage.getItem('edoCart');
+      if (savedCart) {
+        try {
+          cart = JSON.parse(savedCart);
+          updateCartUI();
+        } catch (e) {
+          console.error("Error loading cart:", e);
+        }
+      }
+
+      // Load active order from localStorage
+      const savedOrderId = localStorage.getItem('edoActiveOrderId');
+      if (savedOrderId) {
+        showOrderTracking(savedOrderId);
+      } else {
+        showHome();
+      }
+
       await fetchProducts();
     }
 
@@ -1425,11 +1442,36 @@
       }
     }
 
-    function renderProducts(products) {
+    // Pagination State
+    let currentPage = 1;
+    const itemsPerPage = 8;
+
+    function renderProducts(products, enablePagination = true) {
       const grid = document.getElementById('products-grid');
       grid.innerHTML = '';
 
-      products.forEach(p => {
+      let productsToShow = products;
+
+      if (enablePagination) {
+        // Calculate pagination
+        const totalPages = Math.ceil(products.length / itemsPerPage);
+
+        // Ensure current page is valid
+        if (currentPage < 1) currentPage = 1;
+        if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        productsToShow = products.slice(startIndex, endIndex);
+
+        renderPaginationControls(totalPages);
+      } else {
+        // Clear pagination controls if disabled
+        const controls = document.getElementById('pagination-controls');
+        if (controls) controls.innerHTML = '';
+      }
+
+      productsToShow.forEach(p => {
         const img = p.imageUrl || PRODUCT_IMAGES[p.name] || PRODUCT_IMAGES[Object.keys(PRODUCT_IMAGES).find(k => k.toLowerCase() === p.name.toLowerCase())] || DEFAULT_IMAGE;
 
         const card = document.createElement('div');
@@ -1451,6 +1493,71 @@
         grid.appendChild(card);
       });
     }
+
+    function renderPaginationControls(totalPages) {
+      const container = document.getElementById('pagination-controls');
+      if (!container) return;
+
+      container.innerHTML = '';
+
+      if (totalPages <= 1) return;
+
+      // Prev Button
+      const prevBtn = document.createElement('button');
+      prevBtn.innerText = '← Anterior';
+      prevBtn.className = 'btn-pagination';
+      prevBtn.style.cssText = `
+        background: #1a1a1a; 
+        color: #fff; 
+        border: 1px solid #333; 
+        padding: 8px 16px; 
+        border-radius: 6px; 
+        cursor: pointer;
+        opacity: ${currentPage === 1 ? '0.5' : '1'};
+        pointer-events: ${currentPage === 1 ? 'none' : 'auto'};
+      `;
+      prevBtn.onclick = () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderProducts(currentFilteredProducts || allProducts);
+          window.scrollTo({ top: document.getElementById('menu-section').offsetTop - 100, behavior: 'smooth' });
+        }
+      };
+      container.appendChild(prevBtn);
+
+      // Page Info
+      const pageInfo = document.createElement('span');
+      pageInfo.innerText = `Página ${currentPage} de ${totalPages}`;
+      pageInfo.style.cssText = 'color: #888; align-self: center; font-size: 14px;';
+      container.appendChild(pageInfo);
+
+      // Next Button
+      const nextBtn = document.createElement('button');
+      nextBtn.innerText = 'Siguiente →';
+      nextBtn.className = 'btn-pagination';
+      nextBtn.style.cssText = `
+        background: #1a1a1a; 
+        color: #fff; 
+        border: 1px solid #333; 
+        padding: 8px 16px; 
+        border-radius: 6px; 
+        cursor: pointer;
+        opacity: ${currentPage === totalPages ? '0.5' : '1'};
+        pointer-events: ${currentPage === totalPages ? 'none' : 'auto'};
+      `;
+      nextBtn.onclick = () => {
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderProducts(currentFilteredProducts || allProducts);
+          window.scrollTo({ top: document.getElementById('menu-section').offsetTop - 100, behavior: 'smooth' });
+        }
+      };
+      container.appendChild(nextBtn);
+    }
+
+    // Global variable to track current filtered set
+    let currentFilteredProducts = null;
+
 
     function addDirectToCart(id) {
       const product = allProducts.find(p => p.id === id);
@@ -1475,6 +1582,7 @@
       document.getElementById('view-home').classList.add('active');
       document.getElementById('view-menu').classList.remove('active');
       document.getElementById('view-checkout').classList.remove('active');
+      document.getElementById('view-tracking').classList.remove('active');
       document.getElementById('page-title').textContent = "Inicio";
       document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
     }
@@ -1483,6 +1591,7 @@
       document.getElementById('view-home').classList.remove('active');
       document.getElementById('view-menu').classList.add('active');
       document.getElementById('view-checkout').classList.remove('active');
+      document.getElementById('view-tracking').classList.remove('active');
       document.getElementById('page-title').textContent = cat === 'All' ? 'Nuestra Carta' : cat;
 
       document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
@@ -1495,10 +1604,27 @@
       }
 
       if (cat === 'All') {
-        renderProducts(allProducts);
+        renderProducts(allProducts, true);
       } else {
         const filtered = allProducts.filter(p => (p.category || 'Makis') === cat);
-        renderProducts(filtered);
+        renderProducts(filtered, false);
+      }
+    }
+
+    function filterProducts(category) {
+      // Update active tab
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      currentPage = 1; // Reset to first page on filter change
+
+      if (category === 'Todos') {
+        currentFilteredProducts = null;
+        renderProducts(allProducts, true);
+      } else {
+        const filtered = allProducts.filter(p => p.category === category || (category === 'Makis' && p.category === 'Maki'));
+        currentFilteredProducts = filtered;
+        renderProducts(filtered, false);
       }
     }
 
@@ -1528,10 +1654,10 @@
             <div class="option-group">
                 <label class="option-label">Cantidad de Cortes</label>
                 <label class="radio-option">
-                  <input type="radio" name="modal-cuts" value="5" checked onchange="updateModalPrice()"> 5 Cortes (S./25)
+                  <input type="radio" name="modal-cuts" value="5" checked onchange="updateModalPrice()"> 5 Cortes (Precio regular)
                 </label>
                 <label class="radio-option">
-                  <input type="radio" name="modal-cuts" value="10" onchange="updateModalPrice()"> 10 Cortes (x1.8)
+                  <input type="radio" name="modal-cuts" value="10" onchange="updateModalPrice()"> 10 Cortes (S/. 41.00)
                 </label>
             </div>
 
@@ -1638,6 +1764,19 @@
             </div>
             <div id="combo-error" style="color:var(--danger-color); font-size:0.8rem; margin-top:10px; display:none;">Debes seleccionar exactamente ${maxSelection} makis.</div>
           </div>
+
+          <div class="option-group">
+              <label class="option-label">Salsas Extra (+ S/. 5.00)</label>
+              <label class="radio-option">
+                <input type="checkbox" class="modal-sauce" value="Acevichada" onchange="updateModalPrice()"> Acevichada
+              </label>
+              <label class="radio-option">
+                <input type="checkbox" class="modal-sauce" value="Tare" onchange="updateModalPrice()"> Tare
+              </label>
+              <label class="radio-option">
+                <input type="checkbox" class="modal-sauce" value="Shoyu" onchange="updateModalPrice()"> Shoyu
+              </label>
+          </div>
         `;
       }
     }
@@ -1649,42 +1788,41 @@
       let current = parseInt(countSpan.textContent);
 
       // Calculate total for this section
-      let totalSelected = 0;
-      document.querySelectorAll(`.section-count[data-section="${sectionIdx}"]`).forEach(el => {
-        totalSelected += parseInt(el.textContent);
-      });
+      const allCounts = document.querySelectorAll(`.section-count[data-section="${sectionIdx}"]`);
+      let total = 0;
+      allCounts.forEach(el => total += parseInt(el.textContent));
 
-      if (change > 0 && totalSelected >= max) return;
+      if (change > 0 && total >= max) return;
       if (change < 0 && current <= 0) return;
 
       current += change;
       countSpan.textContent = current;
 
-      totalSelected += change;
-      document.getElementById(`counter-section-${sectionIdx}`).textContent = `${totalSelected}/${max}`;
-
-      if (totalSelected === max) {
-        document.getElementById(`error-section-${sectionIdx}`).style.display = 'none';
-      }
+      // Update total counter
+      total += change;
+      document.getElementById(`counter-section-${sectionIdx}`).textContent = `${total}/${max}`;
+      document.getElementById(`error-section-${sectionIdx}`).style.display = 'none';
     }
 
     function updateComboCount(flavor, change, max) {
       const countSpan = document.getElementById(`count-${flavor}`);
       let current = parseInt(countSpan.textContent);
 
-      let totalSelected = 0;
-      document.querySelectorAll('.flavor-count').forEach(el => totalSelected += parseInt(el.textContent));
+      // Calculate total
+      const allCounts = document.querySelectorAll('.flavor-count');
+      let total = 0;
+      allCounts.forEach(el => total += parseInt(el.textContent));
 
-      if (change > 0 && totalSelected >= max) return;
+      if (change > 0 && total >= max) return;
       if (change < 0 && current <= 0) return;
 
       current += change;
       countSpan.textContent = current;
 
-      totalSelected += change;
-      document.getElementById('combo-counter').textContent = `${totalSelected}/${max}`;
-
-      if (totalSelected === max) document.getElementById('combo-error').style.display = 'none';
+      // Update total counter
+      total += change;
+      document.getElementById('combo-counter').textContent = `${total}/${max}`;
+      document.getElementById('combo-error').style.display = 'none';
     }
 
     function closeModal() {
@@ -1697,7 +1835,9 @@
 
       if (currentProduct.category !== 'Paquetes' && currentProduct.category !== 'Promociones') {
         const cuts = document.querySelector('input[name="modal-cuts"]:checked');
-        if (cuts && cuts.value === "10") price *= 1.8;
+        if (cuts && cuts.value === "10") {
+          price = 41.00; // Fixed price for 10 cuts
+        }
 
         const sauces = document.querySelectorAll('.modal-sauce:checked').length;
         price += (sauces * 5);
@@ -1805,6 +1945,7 @@
     }
 
     function updateCartUI() {
+      localStorage.setItem('edoCart', JSON.stringify(cart));
       const list = document.getElementById('cart-items');
       const count = document.getElementById('cart-count');
       const totalEl = document.getElementById('cart-total');
@@ -2103,39 +2244,43 @@
       document.getElementById('view-menu').classList.remove('active');
       document.getElementById('view-checkout').classList.remove('active');
       document.getElementById('view-tracking').classList.add('active');
-      document.getElementById('page-title').textContent = "Seguimiento de Pedido";
-
+      document.getElementById('page-title').textContent = "Seguimiento";
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
       // Reset tracking view
       document.getElementById('tracking-search-section').style.display = 'block';
       document.getElementById('order-status-display').style.display = 'none';
       document.getElementById('order-search-input').value = '';
-
-      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
     }
 
     async function searchOrder() {
       const orderId = document.getElementById('order-search-input').value.trim();
-      if (!orderId) return alert("Por favor ingresa un ID de pedido");
-
-      showOrderTracking(orderId);
+      if (!orderId) {
+        showToast("Ingresa un ID de pedido");
+        return;
+      }
+      await showOrderTracking(orderId);
     }
 
     async function showOrderTracking(orderId) {
+      // Ensure we switch to tracking view first
+      document.getElementById('view-home').classList.remove('active');
+      document.getElementById('view-menu').classList.remove('active');
+      document.getElementById('view-checkout').classList.remove('active');
+      document.getElementById('view-tracking').classList.add('active');
+      document.getElementById('page-title').textContent = "Seguimiento";
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+
       try {
         const res = await fetch(`${ORDERS_API}/orders/${orderId}`);
 
         if (!res.ok) {
-          alert("Pedido no encontrado");
+          showToast("Pedido no encontrado");
           return;
         }
 
         const order = await res.json();
 
         // Show tracking view
-        document.getElementById('view-home').classList.remove('active');
-        document.getElementById('view-menu').classList.remove('active');
-        document.getElementById('view-checkout').classList.remove('active');
-        document.getElementById('view-tracking').classList.add('active');
         document.getElementById('page-title').textContent = "Seguimiento de Pedido";
 
         // Hide search, show status
@@ -2306,6 +2451,7 @@
           // Stop polling if delivered
           if (order.status === 'ENTREGADO') {
             clearInterval(window.trackingInterval);
+            localStorage.removeItem('edoActiveOrderId');
           }
         }
       } catch (e) {
@@ -2314,10 +2460,8 @@
     }
 
     function showToast(msg) {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 3000);
+      // Toast removed per user request
+      console.log("Toast:", msg);
     }
 
     // Start
