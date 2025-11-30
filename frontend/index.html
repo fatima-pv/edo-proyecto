@@ -1282,6 +1282,11 @@
             <div id="order-details-content"></div>
           </div>
 
+          <button id="tracking-receipt-btn" class="btn-checkout" onclick="downloadReceiptFromTracking()"
+            style="margin-top: 20px; background: #4CAF50; display: none;">
+            📄 DESCARGAR RECIBO
+          </button>
+
           <button class="btn-back" onclick="showTracking()" style="margin-top: 20px;">Buscar Otro Pedido</button>
         </div>
       </div>
@@ -1350,6 +1355,11 @@
 
       <p style="font-size: 0.9rem; color: #888; margin-bottom: 30px;">Guarda este ID para hacer seguimiento a tu pedido.
       </p>
+
+      <button id="download-receipt-btn" class="btn-order" onclick="downloadReceipt()"
+        style="width: 100%; margin-bottom: 15px; background: #4CAF50; display: none;">
+        📄 DESCARGAR RECIBO
+      </button>
 
       <button class="btn-order" onclick="closeSuccessModal()" style="width: 100%;">VER SEGUIMIENTO</button>
     </div>
@@ -1988,6 +1998,9 @@
             document.querySelector('#success-modal h2').textContent = "¡Pedido Confirmado! ありがとう";
             document.getElementById('success-modal').style.display = 'flex';
             window.lastCreatedOrderId = orderId;
+
+            // Start checking for receipt availability
+            checkReceiptAvailability(orderId);
           } else {
             showToast("¡Pedido Realizado! ありがとう");
             setTimeout(() => showHome(), 2000);
@@ -2007,6 +2020,73 @@
         showToast("ID copiado al portapapeles");
       });
     }
+
+    async function downloadReceipt() {
+      const orderId = window.lastCreatedOrderId;
+      if (!orderId) {
+        showToast("No se encontró el ID del pedido");
+        return;
+      }
+
+      try {
+        // Fetch order details to get receipt URL
+        const response = await fetch(`${ORDERS_API}/orders/${orderId}`);
+        if (response.ok) {
+          const order = await response.json();
+          if (order.receiptUrl) {
+            window.open(order.receiptUrl, '_blank');
+            showToast("Abriendo recibo...");
+          } else {
+            showToast("El recibo aún no está disponible. Intenta en unos segundos.");
+          }
+        } else {
+          showToast("Error al obtener el recibo");
+        }
+      } catch (error) {
+        console.error("Error downloading receipt:", error);
+        showToast("Error al descargar el recibo");
+      }
+    }
+
+    // Check for receipt availability after order creation
+    async function checkReceiptAvailability(orderId) {
+      let attempts = 0;
+      const maxAttempts = 10;
+      const checkInterval = 2000; // 2 seconds
+
+      const intervalId = setInterval(async () => {
+        attempts++;
+        try {
+          const response = await fetch(`${ORDERS_API}/orders/${orderId}`);
+          if (response.ok) {
+            const order = await response.json();
+            if (order.receiptUrl) {
+              // Receipt is ready, show the button
+              document.getElementById('download-receipt-btn').style.display = 'block';
+              clearInterval(intervalId);
+            }
+          }
+        } catch (error) {
+          console.error("Error checking receipt:", error);
+        }
+
+        if (attempts >= maxAttempts) {
+          clearInterval(intervalId);
+        }
+      }, checkInterval);
+    }
+
+    function downloadReceiptFromTracking() {
+      if (window.currentOrderReceiptUrl) {
+        window.open(window.currentOrderReceiptUrl, '_blank');
+        showToast("Abriendo recibo...");
+      } else {
+        showToast("El recibo aún no está disponible");
+      }
+    }
+
+
+
 
     function closeSuccessModal() {
       document.getElementById('success-modal').style.display = 'none';
@@ -2094,6 +2174,15 @@
 
       const currentStep = statusMap[status]?.step || 0;
       document.getElementById('current-status-text').textContent = statusMap[status]?.label || status;
+
+      // Show/hide receipt button based on receiptUrl availability
+      const receiptBtn = document.getElementById('tracking-receipt-btn');
+      if (order.receiptUrl) {
+        receiptBtn.style.display = 'block';
+        window.currentOrderReceiptUrl = order.receiptUrl;
+      } else {
+        receiptBtn.style.display = 'none';
+      }
 
       // Reset all steps
       document.querySelectorAll('.status-step').forEach(step => {

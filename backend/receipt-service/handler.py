@@ -10,33 +10,37 @@ BUCKET_NAME = os.environ['RECEIPTS_BUCKET']
 
 def generate_receipt(event, context):
     """
-    Genera un recibo HTML cuando se crea una orden (vía EventBridge)
+    Genera un recibo HTML cuando se crea una orden (vía DynamoDB Streams)
     """
     print("Generating receipt for event:", json.dumps(event))
     
     try:
-        # Extraer datos del evento de EventBridge
-        detail = event.get('detail', {})
-        order_id = detail.get('orderId')
-        
-        if not order_id:
-            print("No orderId found in event")
-            return
+        # Process DynamoDB Stream records
+        for record in event['Records']:
+            # Only process INSERT events (new orders)
+            if record['eventName'] != 'INSERT':
+                continue
+                
+            # Extract order data from DynamoDB Stream
+            new_image = record['dynamodb']['NewImage']
+            order_id = new_image['orderId']['S']
             
-        # Obtener datos completos de la orden
-        response = orders_table.get_item(Key={'orderId': order_id})
-        order = response.get('Item')
-        
-        if not order:
-            print(f"Order {order_id} not found in DynamoDB")
-            return
+            print(f"Processing new order: {order_id}")
+            
+            # Get full order details from DynamoDB
+            response = orders_table.get_item(Key={'orderId': order_id})
+            order = response.get('Item')
+            
+            if not order:
+                print(f"Order {order_id} not found in DynamoDB")
+                continue
 
-        # Generar HTML del recibo
-        customer = order.get('customer', {})
-        items = order.get('items', [])
-        total_amount = float(order.get('total', 0))
-        
-        html_content = f"""
+            # Generar HTML del recibo
+            customer = order.get('customer', {})
+            items = order.get('items', [])
+            total_amount = float(order.get('total', 0))
+            
+            html_content = f"""
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -169,14 +173,14 @@ def generate_receipt(event, context):
                 </thead>
                 <tbody>
 """
-        
-        for item in items:
-            name = item.get('name', item.get('product', {}).get('name', 'Producto'))
-            price = float(item.get('price', 0))
-            quantity = int(item.get('quantity', 1))
-            subtotal = price * quantity
             
-            html_content += f"""
+            for item in items:
+                name = item.get('name', item.get('product', {}).get('name', 'Producto'))
+                price = float(item.get('price', 0))
+                quantity = int(item.get('quantity', 1))
+                subtotal = price * quantity
+                
+                html_content += f"""
                     <tr>
                         <td>{quantity}</td>
                         <td>{name}</td>
@@ -184,8 +188,8 @@ def generate_receipt(event, context):
                         <td style="text-align: right;">S/. {subtotal:.2f}</td>
                     </tr>
 """
-        
-        html_content += f"""
+            
+            html_content += f"""
                 </tbody>
             </table>
         </div>
@@ -202,32 +206,32 @@ def generate_receipt(event, context):
 </body>
 </html>
 """
-        
-        # Subir HTML a S3
-        file_name = f"receipts/{order_id}.html"
-        
-        s3_client.put_object(
-            Bucket=BUCKET_NAME,
-            Key=file_name,
-            Body=html_content.encode('utf-8'),
-            ContentType='text/html',
-            ACL='public-read'
-        )
-        
-        # URL Pública
-        receipt_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_name}"
-        print(f"Receipt generated: {receipt_url}")
-        
-        # Actualizar DynamoDB con la URL
-        orders_table.update_item(
-            Key={'orderId': order_id},
-            UpdateExpression='SET receiptUrl = :url',
-            ExpressionAttributeValues={':url': receipt_url}
-        )
+            
+            # Subir HTML a S3
+            file_name = f"receipts/{order_id}.html"
+            
+            s3_client.put_object(
+                Bucket=BUCKET_NAME,
+                Key=file_name,
+                Body=html_content.encode('utf-8'),
+                ContentType='text/html',
+                ACL='public-read'
+            )
+            
+            # URL Pública
+            receipt_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_name}"
+            print(f"Receipt generated: {receipt_url}")
+            
+            # Actualizar DynamoDB con la URL
+            orders_table.update_item(
+                Key={'orderId': order_id},
+                UpdateExpression='SET receiptUrl = :url',
+                ExpressionAttributeValues={':url': receipt_url}
+            )
         
         return {
             'statusCode': 200,
-            'body': json.dumps({'receiptUrl': receipt_url})
+            'body': json.dumps({'message': 'Receipts processed'})
         }
         
     except Exception as e:

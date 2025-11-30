@@ -17,13 +17,13 @@ functions:
   generateReceipt:
     handler: handler.generate_receipt
     events:
-      - eventBridge:
-          eventBus: arn:aws:events:us-east-1:076456812464:event-bus/EdoOrderBus
-          pattern:
-            source:
-              - edo.orders
-            detail-type:
-              - OrderCreated
+      - stream:
+          type: dynamodb
+          arn: arn:aws:dynamodb:us-east-1:076456812464:table/EdoOrdersTable/stream/2025-11-30T04:26:45.585
+          batchSize: 1
+          startingPosition: LATEST
+          filterPatterns:
+            - eventName: [INSERT]
 
 resources:
   Resources:
