@@ -1,0 +1,54 @@
+service: edo-invoice-service
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+  memorySize: 256
+  timeout: 10
+  iam:
+    role: arn:aws:iam::076456812464:role/LabRole
+  environment:
+    RECEIPTS_BUCKET: edo-receipts-bucket-${opt:stage, 'dev'}
+    ORDERS_TABLE: EdoOrdersTable
+
+functions:
+  generateReceipt:
+    handler: handler.generateReceipt
+    events:
+      - eventBridge:
+          eventBus: arn:aws:events:us-east-1:076456812464:event-bus/EdoOrderBus
+          pattern:
+            source:
+              - edo.orders
+            detail-type:
+              - OrderCreated
+
+resources:
+  Resources:
+    ReceiptsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:provider.environment.RECEIPTS_BUCKET}
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders: ['*']
+              AllowedMethods: [GET]
+              AllowedOrigins: ['*']
+    
+    ReceiptsBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref ReceiptsBucket
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal: "*"
+              Action: "s3:GetObject"
+              Resource: !Join ["", [!GetAtt ReceiptsBucket.Arn, "/*"]]
