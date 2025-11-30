@@ -9,6 +9,10 @@ dynamodb = boto3.resource('dynamodb')
 orders_table = dynamodb.Table(os.environ['ORDERS_TABLE'])
 events_client = boto3.client('events')
 sfn_client = boto3.client('stepfunctions')
+sqs_client = boto3.client('sqs')
+
+# Notification Queue URL (will be set after deploying notification-service)
+NOTIFICATION_QUEUE_URL = os.environ.get('NOTIFICATION_QUEUE_URL', '')
 
 class DecimalEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -75,6 +79,23 @@ def createOrder(event, context):
             )
         except Exception as e:
             print(f"Error emitting event: {str(e)}")
+        
+        # Enviar notificación por email (SQS -> SNS)
+        try:
+            if NOTIFICATION_QUEUE_URL:
+                sqs_client.send_message(
+                    QueueUrl=NOTIFICATION_QUEUE_URL,
+                    MessageBody=json.dumps({
+                        'type': 'ORDER_CREATED',
+                        'orderId': order_id,
+                        'customerEmail': order['customer'].get('email', ''),
+                        'customerName': order['customer'].get('name', 'Cliente'),
+                        'status': 'CONFIRMADO'
+                    })
+                )
+                print(f"✅ Notification queued for order {order_id}")
+        except Exception as e:
+            print(f"⚠️ Error queuing notification: {str(e)}")
         
         return {
             'statusCode': 200,
@@ -382,6 +403,23 @@ def processPacking(event, context):
             }
         )
         
+        # Enviar notificación de cambio de estado
+        try:
+            if NOTIFICATION_QUEUE_URL:
+                sqs_client.send_message(
+                    QueueUrl=NOTIFICATION_QUEUE_URL,
+                    MessageBody=json.dumps({
+                        'type': 'ORDER_READY',
+                        'orderId': order_id,
+                        'customerEmail': order.get('customer', {}).get('email', ''),
+                        'customerName': order.get('customer', {}).get('name', 'Cliente'),
+                        'status': 'LISTO_PARA_RETIRAR'
+                    })
+                )
+                print(f"✅ Order ready notification queued for order {order_id}")
+        except Exception as e:
+            print(f"⚠️ Error queuing ready notification: {str(e)}")
+        
         # Enviar success al Step Functions
         if task_token:
             try:
@@ -480,6 +518,40 @@ def processDelivery(event, context):
                 }]
             }
         )
+        
+        # Enviar notificación de cambio de estado
+        try:
+            if NOTIFICATION_QUEUE_URL:
+                sqs_client.send_message(
+                    QueueUrl=NOTIFICATION_QUEUE_URL,
+                    MessageBody=json.dumps({
+                        'type': 'STATUS_UPDATE',
+                        'orderId': order_id,
+                        'customerEmail': order.get('customer', {}).get('email', ''),
+                        'customerName': order.get('customer', {}).get('name', 'Cliente'),
+                        'status': 'EN_CAMINO'
+                    })
+                )
+                print(f"✅ Delivery notification queued for order {order_id}")
+        except Exception as e:
+            print(f"⚠️ Error queuing delivery notification: {str(e)}")
+        
+        # Enviar notificación de cambio de estado
+        try:
+            if NOTIFICATION_QUEUE_URL:
+                sqs_client.send_message(
+                    QueueUrl=NOTIFICATION_QUEUE_URL,
+                    MessageBody=json.dumps({
+                        'type': 'STATUS_UPDATE',
+                        'orderId': order_id,
+                        'customerEmail': order.get('customer', {}).get('email', ''),
+                        'customerName': order.get('customer', {}).get('name', 'Cliente'),
+                        'status': 'EN_PREPARACION'
+                    })
+                )
+                print(f"✅ Status update notification queued for order {order_id}")
+        except Exception as e:
+            print(f"⚠️ Error queuing status notification: {str(e)}")
         
         # Enviar success al Step Functions
         if task_token:
