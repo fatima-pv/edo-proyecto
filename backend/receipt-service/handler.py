@@ -1,11 +1,7 @@
 import json
 import boto3
 import os
-import io
 from datetime import datetime
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib import colors
 
 s3_client = boto3.client('s3')
 dynamodb = boto3.resource('dynamodb')
@@ -14,7 +10,7 @@ BUCKET_NAME = os.environ['RECEIPTS_BUCKET']
 
 def generate_receipt(event, context):
     """
-    Genera un PDF del recibo cuando se crea una orden (vía EventBridge)
+    Genera un recibo HTML cuando se crea una orden (vía EventBridge)
     """
     print("Generating receipt for event:", json.dumps(event))
     
@@ -27,7 +23,7 @@ def generate_receipt(event, context):
             print("No orderId found in event")
             return
             
-        # Obtener datos completos de la orden (por si falta algo en el evento)
+        # Obtener datos completos de la orden
         response = orders_table.get_item(Key={'orderId': order_id})
         order = response.get('Item')
         
@@ -35,90 +31,186 @@ def generate_receipt(event, context):
             print(f"Order {order_id} not found in DynamoDB")
             return
 
-        # Generar PDF en memoria
-        pdf_buffer = io.BytesIO()
-        c = canvas.Canvas(pdf_buffer, pagesize=letter)
-        width, height = letter
-        
-        # --- Diseño del Recibo ---
-        
-        # Header
-        c.setFillColor(colors.navy)
-        c.setFont("Helvetica-Bold", 24)
-        c.drawString(50, height - 50, "Edo Sushi Bar")
-        
-        c.setFillColor(colors.black)
-        c.setFont("Helvetica", 10)
-        c.drawString(50, height - 70, "La mejor experiencia japonesa")
-        c.drawString(50, height - 85, "www.edosushibar.com")
-        
-        # Título
-        c.setFont("Helvetica-Bold", 18)
-        c.drawCentredString(width/2, height - 120, "COMPROBANTE DE PAGO")
-        
-        # Info del Pedido
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(50, height - 160, f"Pedido: {order_id}")
-        
-        c.setFont("Helvetica", 11)
-        c.drawString(50, height - 180, f"Fecha: {order.get('createdAt', datetime.now().isoformat())}")
-        
-        # Info del Cliente
+        # Generar HTML del recibo
         customer = order.get('customer', {})
-        c.drawString(50, height - 210, f"Cliente: {customer.get('name', 'N/A')}")
-        c.drawString(50, height - 225, f"Email: {customer.get('email', 'N/A')}")
-        c.drawString(50, height - 240, f"DNI: {customer.get('dni', 'N/A')}")
+        items = order.get('items', [])
+        total_amount = float(order.get('total', 0))
         
-        # Línea separadora
-        c.line(50, height - 260, width - 50, height - 260)
+        html_content = f"""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recibo - Edo Sushi Bar</title>
+    <style>
+        body {{
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }}
+        .receipt {{
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }}
+        .header {{
+            text-align: center;
+            border-bottom: 3px solid #1a237e;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }}
+        .header h1 {{
+            color: #1a237e;
+            margin: 0;
+            font-size: 32px;
+        }}
+        .header p {{
+            color: #666;
+            margin: 5px 0;
+        }}
+        .info {{
+            margin: 20px 0;
+        }}
+        .info-row {{
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }}
+        .info-label {{
+            font-weight: bold;
+            color: #333;
+        }}
+        .items {{
+            margin: 30px 0;
+        }}
+        .items table {{
+            width: 100%;
+            border-collapse: collapse;
+        }}
+        .items th {{
+            background: #1a237e;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }}
+        .items td {{
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }}
+        .total {{
+            text-align: right;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #1a237e;
+        }}
+        .total-amount {{
+            font-size: 24px;
+            font-weight: bold;
+            color: #1a237e;
+        }}
+        .footer {{
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 14px;
+        }}
+    </style>
+</head>
+<body>
+    <div class="receipt">
+        <div class="header">
+            <h1>🍣 Edo Sushi Bar</h1>
+            <p>La mejor experiencia japonesa</p>
+            <p>www.edosushibar.com</p>
+        </div>
         
-        # Tabla de Productos
-        y = height - 290
-        c.setFont("Helvetica-Bold", 10)
-        c.drawString(50, y, "CANT")
-        c.drawString(100, y, "DESCRIPCIÓN")
-        c.drawString(450, y, "PRECIO")
+        <h2 style="text-align: center; color: #1a237e;">COMPROBANTE DE PAGO</h2>
         
-        y -= 20
-        c.setFont("Helvetica", 10)
+        <div class="info">
+            <div class="info-row">
+                <span class="info-label">Pedido:</span>
+                <span>{order_id}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Fecha:</span>
+                <span>{order.get('createdAt', datetime.now().isoformat())}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Cliente:</span>
+                <span>{customer.get('name', 'N/A')}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span>{customer.get('email', 'N/A')}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">DNI:</span>
+                <span>{customer.get('dni', 'N/A')}</span>
+            </div>
+        </div>
         
-        total = 0
-        for item in order.get('items', []):
+        <div class="items">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cantidad</th>
+                        <th>Descripción</th>
+                        <th style="text-align: right;">Precio Unit.</th>
+                        <th style="text-align: right;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+"""
+        
+        for item in items:
             name = item.get('name', item.get('product', {}).get('name', 'Producto'))
             price = float(item.get('price', 0))
             quantity = int(item.get('quantity', 1))
             subtotal = price * quantity
             
-            c.drawString(50, y, str(quantity))
-            c.drawString(100, y, name)
-            c.drawString(450, y, f"S/. {subtotal:.2f}")
-            y -= 20
-            
-        # Línea separadora
-        y -= 10
-        c.line(50, y, width - 50, y)
+            html_content += f"""
+                    <tr>
+                        <td>{quantity}</td>
+                        <td>{name}</td>
+                        <td style="text-align: right;">S/. {price:.2f}</td>
+                        <td style="text-align: right;">S/. {subtotal:.2f}</td>
+                    </tr>
+"""
         
-        # Totales
-        y -= 30
-        c.setFont("Helvetica-Bold", 14)
-        total_amount = float(order.get('total', 0))
-        c.drawRightString(width - 50, y, f"TOTAL: S/. {total_amount:.2f}")
+        html_content += f"""
+                </tbody>
+            </table>
+        </div>
         
-        # Footer
-        c.setFont("Helvetica-Oblique", 8)
-        c.drawCentredString(width/2, 50, "Gracias por su preferencia - Edo Sushi Bar")
+        <div class="total">
+            <p class="total-amount">TOTAL: S/. {total_amount:.2f}</p>
+        </div>
         
-        c.save()
+        <div class="footer">
+            <p>¡Gracias por su preferencia!</p>
+            <p>Edo Sushi Bar - Sabor auténtico japonés</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
         
-        # --- Subir a S3 ---
-        pdf_buffer.seek(0)
-        file_name = f"receipts/{order_id}.pdf"
+        # Subir HTML a S3
+        file_name = f"receipts/{order_id}.html"
         
         s3_client.put_object(
             Bucket=BUCKET_NAME,
             Key=file_name,
-            Body=pdf_buffer.getvalue(),
-            ContentType='application/pdf',
+            Body=html_content.encode('utf-8'),
+            ContentType='text/html',
             ACL='public-read'
         )
         

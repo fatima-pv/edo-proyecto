@@ -13,16 +13,9 @@ provider:
     RECEIPTS_BUCKET: edo-receipts-${self:provider.stage}-fatima  # Adding name to ensure uniqueness
     ORDERS_TABLE: EdoOrdersTable
 
-package:
-  patterns:
-    - handler.py
-    - '!layers/**'
-
 functions:
   generateReceipt:
     handler: handler.generate_receipt
-    layers:
-      - !Ref PdfLayer
     events:
       - eventBridge:
           eventBus: arn:aws:events:us-east-1:076456812464:event-bus/EdoOrderBus
@@ -31,14 +24,6 @@ functions:
               - edo.orders
             detail-type:
               - OrderCreated
-
-layers:
-  PdfLayer:
-    path: layers/pdf-layer
-    name: edo-pdf-layer
-    description: ReportLab for PDF generation
-    compatibleRuntimes:
-      - python3.9
 
 resources:
   Resources:
