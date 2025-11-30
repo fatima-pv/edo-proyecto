@@ -1,0 +1,17 @@
+# Serverless
+.serverless/
+node_modules/
+
+# Lambda Layers (dependencies)
+layers/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.Python
+
+# Environment
+.env
+.venv
