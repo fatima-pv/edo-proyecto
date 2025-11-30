@@ -6,6 +6,7 @@ from decimal import Decimal
 
 sns_client = boto3.client('sns')
 sqs_client = boto3.client('sqs')
+ses_client = boto3.client('ses')
 dynamodb = boto3.resource('dynamodb')
 
 SNS_TOPIC_ARN = os.environ.get('SNS_TOPIC_ARN')
@@ -42,6 +43,7 @@ def process_notification(event, context):
             )
             
             # Enviar email por SNS
+            # Nota: En SNS el destinatario debe estar suscrito al topic
             response = sns_client.publish(
                 TopicArn=SNS_TOPIC_ARN,
                 Subject=subject,
@@ -58,7 +60,7 @@ def process_notification(event, context):
                 }
             )
             
-            print(f"✅ Email sent successfully. MessageId: {response['MessageId']}")
+            print(f"✅ Notification sent to SNS. MessageId: {response['MessageId']}")
             
         except Exception as e:
             print(f"❌ Error processing notification: {str(e)}")

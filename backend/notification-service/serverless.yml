@@ -5,9 +5,20 @@ provider:
   runtime: python3.9
   region: us-east-1
   memorySize: 256
-  timeout: 30
+  timeout: 29
   iam:
-    role: arn:aws:iam::076456812464:role/LabRole
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+          Resource: !GetAtt NotificationQueue.Arn
+        - Effect: Allow
+          Action:
+            - sns:Publish
+          Resource: !Ref OrderNotificationTopic
   environment:
     NOTIFICATION_QUEUE_URL: !Ref NotificationQueue
     SNS_TOPIC_ARN: !Ref OrderNotificationTopic
@@ -21,7 +32,6 @@ functions:
       - sqs:
           arn: !GetAtt NotificationQueue.Arn
           batchSize: 10
-          maximumBatchingWindowInSeconds: 5
 
   # Endpoint para enviar notificación manual (opcional)
   sendNotification:

@@ -11,6 +11,7 @@ provider:
   environment:
     ORDERS_TABLE: EdoOrdersTable
     ORDER_BUS_NAME: EdoOrderBus
+    NOTIFICATION_QUEUE_URL: https://sqs.us-east-1.amazonaws.com/076456812464/EdoNotificationQueue
 
 functions:
   createOrder:

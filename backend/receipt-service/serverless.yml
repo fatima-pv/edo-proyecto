@@ -1,0 +1,64 @@
+service: edo-receipt-service
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+  memorySize: 512
+  timeout: 60
+  iam:
+    role: arn:aws:iam::076456812464:role/LabRole
+  environment:
+    RECEIPTS_BUCKET: edo-receipts-${self:provider.stage}-fatima  # Adding name to ensure uniqueness
+    ORDERS_TABLE: EdoOrdersTable
+
+functions:
+  generateReceipt:
+    handler: handler.generate_receipt
+    layers:
+      - !Ref PdfLayer
+    events:
+      - eventBridge:
+          eventBus: arn:aws:events:us-east-1:076456812464:event-bus/EdoOrderBus
+          pattern:
+            source:
+              - edo.orders
+            detail-type:
+              - OrderCreated
+
+layers:
+  PdfLayer:
+    path: layers/pdf-layer
+    name: edo-pdf-layer
+    description: ReportLab for PDF generation
+    compatibleRuntimes:
+      - python3.9
+
+resources:
+  Resources:
+    ReceiptsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: edo-receipts-${self:provider.stage}-fatima
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+        CorsConfiguration:
+          CorsRules:
+            - AllowedOrigins: ['*']
+              AllowedMethods: [GET]
+              AllowedHeaders: ['*']
+    
+    # Policy for public read access (optional, depending on requirements)
+    ReceiptsBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref ReceiptsBucket
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: PublicReadGetObject
+              Effect: Allow
+              Principal: "*"
+              Action: "s3:GetObject"
+              Resource: !Join ['', ['arn:aws:s3:::', !Ref ReceiptsBucket, '/*']]
