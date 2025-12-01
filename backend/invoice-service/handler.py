@@ -2,11 +2,6 @@ import json
 import boto3
 import os
 from datetime import datetime
-from io import BytesIO
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.units import inch
-from reportlab.pdfgen import canvas
-from reportlab.lib import colors
 
 s3 = boto3.client('s3')
 dynamodb = boto3.resource('dynamodb')
@@ -23,80 +18,52 @@ def generateReceipt(event, context):
         items = detail['items']
         total = detail['total']
         
-        # Create PDF in memory
-        buffer = BytesIO()
-        c = canvas.Canvas(buffer, pagesize=letter)
-        width, height = letter
+        # Create TXT receipt (simple and works)
+        receipt_text = f"""
+╔══════════════════════════════════════════════╗
+║           EDO SUSHI BAR 🍣                   ║
+║           BOLETA DE VENTA                    ║
+╚══════════════════════════════════════════════╝
+
+Orden: {order_id}
+Cliente: {customer.get('name', 'Cliente')}
+DNI: {customer.get('dni', 'N/A')}
+Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PRODUCTOS:
+"""
         
-        # Set up the PDF
-        y = height - 1 * inch
-        
-        # Title
-        c.setFont("Helvetica-Bold", 20)
-        c.drawCentredString(width/2, y, "EDO SUSHI BAR")
-        y -= 0.3 * inch
-        
-        c.setFont("Helvetica", 12)
-        c.drawCentredString(width/2, y, "BOLETA DE VENTA")
-        y -= 0.5 * inch
-        
-        # Order details
-        c.setFont("Helvetica-Bold", 11)
-        c.drawString(1 * inch, y, f"Orden: {order_id[:20]}...")
-        y -= 0.25 * inch
-        
-        c.setFont("Helvetica", 10)
-        c.drawString(1 * inch, y, f"Cliente: {customer.get('name', 'Cliente')}")
-        y -= 0.2 * inch
-        c.drawString(1 * inch, y, f"Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        y -= 0.4 * inch
-        
-        # Line separator
-        c.line(1 * inch, y, width - 1 * inch, y)
-        y -= 0.3 * inch
-        
-        # Items header
-        c.setFont("Helvetica-Bold", 10)
-        c.drawString(1 * inch, y, "Producto")
-        c.drawString(width - 2 * inch, y, "Precio")
-        y -= 0.25 * inch
-        
-        # Items
-        c.setFont("Helvetica", 10)
+        # Add items
         for item in items:
             product_name = item.get('product', {}).get('name', 'Producto')
-            # Try to get price from item.price first, then from item.product.price
             price = item.get('price', item.get('product', {}).get('price', 0))
-            
-            c.drawString(1 * inch, y, f"{product_name}")
-            c.drawString(width - 2 * inch, y, f"S/ {float(price):.2f}")
-            y -= 0.2 * inch
+            quantity = item.get('quantity', 1)
+            receipt_text += f"  • {product_name} x{quantity}\n"
+            receipt_text += f"    S/ {float(price):.2f}\n"
         
-        y -= 0.2 * inch
-        c.line(1 * inch, y, width - 1 * inch, y)
-        y -= 0.3 * inch
+        receipt_text += f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TOTAL: S/ {float(total):.2f}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+¡Gracias por su preferencia!
+ありがとう (Arigatou)
+
+Dirección: {customer.get('address', 'Recojo en tienda')}
+Tipo: {detail.get('deliveryType', 'DELIVERY')}
+"""
         
-        # Total
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(1 * inch, y, "TOTAL:")
-        c.drawString(width - 2 * inch, y, f"S/ {float(total):.2f}")
-        y -= 0.5 * inch
-        
-        # Footer
-        c.setFont("Helvetica-Oblique", 8)
-        c.drawCentredString(width/2, y, "¡Gracias por su preferencia! ありがとう")
-        
-        # Save PDF
-        c.save()
-        buffer.seek(0)
-        
-        # Upload to S3
-        file_key = f"boleta-{order_id}.pdf"
+        # Upload to S3 as TXT
+        file_key = f"boleta-{order_id}.txt"
         s3.put_object(
             Bucket=BUCKET_NAME,
             Key=file_key,
-            Body=buffer.getvalue(),
-            ContentType='application/pdf'
+            Body=receipt_text.encode('utf-8'),
+            ContentType='text/plain; charset=utf-8'
         )
         
         # Construct URL
