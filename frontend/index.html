@@ -1654,11 +1654,12 @@
     }
 
     function renderStandardOptions(container) {
+      const basePrice = parseFloat(currentProduct.price);
       container.innerHTML = `
             <div class="option-group">
                 <label class="option-label">Cantidad de Cortes</label>
                 <label class="radio-option">
-                  <input type="radio" name="modal-cuts" value="5" checked onchange="updateModalPrice()"> 5 Cortes (Precio regular)
+                  <input type="radio" name="modal-cuts" value="5" checked onchange="updateModalPrice()"> 5 Cortes (S/. ${basePrice.toFixed(2)})
                 </label>
                 <label class="radio-option">
                   <input type="radio" name="modal-cuts" value="10" onchange="updateModalPrice()"> 10 Cortes (S/. 41.00)
