@@ -1,0 +1,1270 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "The AWS CloudFormation template for this Serverless application",
+  "Resources": {
+    "ServerlessDeploymentBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "ServerlessDeploymentBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "ServerlessDeploymentBucket"
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":s3:::",
+                      {
+                        "Ref": "ServerlessDeploymentBucket"
+                      },
+                      "/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":s3:::",
+                      {
+                        "Ref": "ServerlessDeploymentBucket"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": false
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "AuthLoginLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/edo-sushi-bar-dev-authLogin"
+      }
+    },
+    "CreateOrderLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/edo-sushi-bar-dev-createOrder"
+      }
+    },
+    "GetOrdersLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/edo-sushi-bar-dev-getOrders"
+      }
+    },
+    "UpdateOrderStepLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/edo-sushi-bar-dev-updateOrderStep"
+      }
+    },
+    "NotifyStaffLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/edo-sushi-bar-dev-notifyStaff"
+      }
+    },
+    "AuthLoginLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/edo-sushi-bar/dev/1763788686840-2025-11-22T05:18:06.840Z/edo-sushi-bar.zip"
+        },
+        "Handler": "src.handlers.auth.login",
+        "Runtime": "python3.11",
+        "FunctionName": "edo-sushi-bar-dev-authLogin",
+        "MemorySize": 1024,
+        "Timeout": 6,
+        "Environment": {
+          "Variables": {
+            "USERS_TABLE": "edo-sushi-bar-users-dev",
+            "ORDERS_TABLE": "edo-sushi-bar-orders-dev",
+            "EVENT_BUS_NAME": "default",
+            "STAGE": "dev",
+            "JWT_SECRET": "edo-secret-key-change-in-production"
+          }
+        },
+        "Role": "arn:aws:iam::520247722169:role/LabRole"
+      },
+      "DependsOn": [
+        "AuthLoginLogGroup"
+      ]
+    },
+    "CreateOrderLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/edo-sushi-bar/dev/1763788686840-2025-11-22T05:18:06.840Z/edo-sushi-bar.zip"
+        },
+        "Handler": "src.handlers.orders.create_order",
+        "Runtime": "python3.11",
+        "FunctionName": "edo-sushi-bar-dev-createOrder",
+        "MemorySize": 1024,
+        "Timeout": 6,
+        "Environment": {
+          "Variables": {
+            "USERS_TABLE": "edo-sushi-bar-users-dev",
+            "ORDERS_TABLE": "edo-sushi-bar-orders-dev",
+            "EVENT_BUS_NAME": "default",
+            "STAGE": "dev",
+            "STATE_MACHINE_ARN": {
+              "Fn::Sub": "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:EdoOrderWorkflow-dev"
+            }
+          }
+        },
+        "Role": "arn:aws:iam::520247722169:role/LabRole"
+      },
+      "DependsOn": [
+        "CreateOrderLogGroup"
+      ]
+    },
+    "GetOrdersLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/edo-sushi-bar/dev/1763788686840-2025-11-22T05:18:06.840Z/edo-sushi-bar.zip"
+        },
+        "Handler": "src.handlers.orders.get_orders",
+        "Runtime": "python3.11",
+        "FunctionName": "edo-sushi-bar-dev-getOrders",
+        "MemorySize": 1024,
+        "Timeout": 6,
+        "Environment": {
+          "Variables": {
+            "USERS_TABLE": "edo-sushi-bar-users-dev",
+            "ORDERS_TABLE": "edo-sushi-bar-orders-dev",
+            "EVENT_BUS_NAME": "default",
+            "STAGE": "dev"
+          }
+        },
+        "Role": "arn:aws:iam::520247722169:role/LabRole"
+      },
+      "DependsOn": [
+        "GetOrdersLogGroup"
+      ]
+    },
+    "UpdateOrderStepLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/edo-sushi-bar/dev/1763788686840-2025-11-22T05:18:06.840Z/edo-sushi-bar.zip"
+        },
+        "Handler": "src.handlers.orders.update_order_step",
+        "Runtime": "python3.11",
+        "FunctionName": "edo-sushi-bar-dev-updateOrderStep",
+        "MemorySize": 1024,
+        "Timeout": 6,
+        "Environment": {
+          "Variables": {
+            "USERS_TABLE": "edo-sushi-bar-users-dev",
+            "ORDERS_TABLE": "edo-sushi-bar-orders-dev",
+            "EVENT_BUS_NAME": "default",
+            "STAGE": "dev"
+          }
+        },
+        "Role": "arn:aws:iam::520247722169:role/LabRole"
+      },
+      "DependsOn": [
+        "UpdateOrderStepLogGroup"
+      ]
+    },
+    "NotifyStaffLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/edo-sushi-bar/dev/1763788686840-2025-11-22T05:18:06.840Z/edo-sushi-bar.zip"
+        },
+        "Handler": "src.handlers.notifications.notify_staff",
+        "Runtime": "python3.11",
+        "FunctionName": "edo-sushi-bar-dev-notifyStaff",
+        "MemorySize": 1024,
+        "Timeout": 6,
+        "Environment": {
+          "Variables": {
+            "USERS_TABLE": "edo-sushi-bar-users-dev",
+            "ORDERS_TABLE": "edo-sushi-bar-orders-dev",
+            "EVENT_BUS_NAME": "default",
+            "STAGE": "dev"
+          }
+        },
+        "Role": "arn:aws:iam::520247722169:role/LabRole"
+      },
+      "DependsOn": [
+        "NotifyStaffLogGroup"
+      ]
+    },
+    "AuthLoginLambdaVersionkF0dbkudhSYHRL2KIbfYv7FJmWEhfZtQRdovmew6Q": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "AuthLoginLambdaFunction"
+        },
+        "CodeSha256": "Fc2zAJCRHSSwXwRne9ORtHPLObHsthc8GLxQ1bVF3C4="
+      }
+    },
+    "CreateOrderLambdaVersionIyBY8qmbzwX6ikvBZwUDpU3UZ8hIelGeZf9ivrVlY": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "CreateOrderLambdaFunction"
+        },
+        "CodeSha256": "Fc2zAJCRHSSwXwRne9ORtHPLObHsthc8GLxQ1bVF3C4="
+      }
+    },
+    "GetOrdersLambdaVersionqRVeHHpr2DUbrARHHZHdNTLZ7GBniKLWpaMO71Qg": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "GetOrdersLambdaFunction"
+        },
+        "CodeSha256": "Fc2zAJCRHSSwXwRne9ORtHPLObHsthc8GLxQ1bVF3C4="
+      }
+    },
+    "UpdateOrderStepLambdaVersionRJmr3jQ8ivgM8ijbijblMexIBIIqMgz62tl50i3BsyY": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "UpdateOrderStepLambdaFunction"
+        },
+        "CodeSha256": "Fc2zAJCRHSSwXwRne9ORtHPLObHsthc8GLxQ1bVF3C4="
+      }
+    },
+    "NotifyStaffLambdaVersione6Env0WzHcmi40wbnb0rOSbbJ8A2wC46elXxByKRGIY": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "NotifyStaffLambdaFunction"
+        },
+        "CodeSha256": "Fc2zAJCRHSSwXwRne9ORtHPLObHsthc8GLxQ1bVF3C4="
+      }
+    },
+    "EdoOrderWorkflowDashdevRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": {
+                  "Fn::Sub": "states.${AWS::Region}.amazonaws.com"
+                }
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "dev-edo-sushi-bar-statemachine",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "events:PutEvents"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": [
+                        "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:event-bus/${eventBus}",
+                        {
+                          "eventBus": "default"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "lambda:InvokeFunction"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::GetAtt": [
+                        "NotifyStaffLambdaFunction",
+                        "Arn"
+                      ]
+                    },
+                    {
+                      "Fn::Sub": [
+                        "${functionArn}:*",
+                        {
+                          "functionArn": {
+                            "Fn::GetAtt": [
+                              "NotifyStaffLambdaFunction",
+                              "Arn"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "EdoOrderWorkflowDashdev": {
+      "Type": "AWS::StepFunctions::StateMachine",
+      "Properties": {
+        "DefinitionString": {
+          "Fn::Sub": [
+            "{\n  \"Comment\": \"Flujo de trabajo para procesar pedidos en Edo Sushi Bar (Cocina -> Empaquetado -> Delivery)\",\n  \"StartAt\": \"ReceiveOrder\",\n  \"States\": {\n    \"ReceiveOrder\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"arn:aws:states:::events:putEvents\",\n      \"Parameters\": {\n        \"Entries\": [\n          {\n            \"Source\": \"edo.orders\",\n            \"DetailType\": \"OrderStatusChanged\",\n            \"Detail\": {\n              \"order_id.$\": \"$.order_id\",\n              \"tenant_id.$\": \"$.tenant_id\",\n              \"status\": \"RECEIVED\",\n              \"timestamp.$\": \"$$.State.EnteredTime\"\n            },\n            \"EventBusName\": \"default\"\n          }\n        ]\n      },\n      \"ResultPath\": \"$.eventResult\",\n      \"Next\": \"WaitCocinero\"\n    },\n    \"WaitCocinero\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"arn:aws:states:::lambda:invoke.waitForTaskToken\",\n      \"Parameters\": {\n        \"FunctionName\": \"${740b11b13d4336efcceda9b0e721f979}\",\n        \"Payload\": {\n          \"order_id.$\": \"$.order_id\",\n          \"tenant_id.$\": \"$.tenant_id\",\n          \"status\": \"WAITING_KITCHEN\",\n          \"task_token.$\": \"$$.Task.Token\",\n          \"message\": \"Nuevo pedido esperando preparación en cocina\"\n        }\n      },\n      \"ResultPath\": \"$.kitchenResult\",\n      \"TimeoutSeconds\": 3600,\n      \"Next\": \"EmitCookingStarted\"\n    },\n    \"EmitCookingStarted\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"arn:aws:states:::events:putEvents\",\n      \"Parameters\": {\n        \"Entries\": [\n          {\n            \"Source\": \"edo.orders\",\n            \"DetailType\": \"OrderStatusChanged\",\n            \"Detail\": {\n              \"order_id.$\": \"$.order_id\",\n              \"tenant_id.$\": \"$.tenant_id\",\n              \"status\": \"COOKING\",\n              \"timestamp.$\": \"$$.State.EnteredTime\"\n            },\n            \"EventBusName\": \"default\"\n          }\n        ]\n      },\n      \"ResultPath\": \"$.eventResult\",\n      \"Next\": \"WaitEmpaquetado\"\n    },\n    \"WaitEmpaquetado\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"arn:aws:states:::lambda:invoke.waitForTaskToken\",\n      \"Parameters\": {\n        \"FunctionName\": \"${740b11b13d4336efcceda9b0e721f979}\",\n        \"Payload\": {\n          \"order_id.$\": \"$.order_id\",\n          \"tenant_id.$\": \"$.tenant_id\",\n          \"status\": \"WAITING_PACKAGING\",\n          \"task_token.$\": \"$$.Task.Token\",\n          \"message\": \"Pedido listo para empaquetar\"\n        }\n      },\n      \"ResultPath\": \"$.packagingResult\",\n      \"TimeoutSeconds\": 3600,\n      \"Next\": \"EmitPackagingDone\"\n    },\n    \"EmitPackagingDone\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"arn:aws:states:::events:putEvents\",\n      \"Parameters\": {\n        \"Entries\": [\n          {\n            \"Source\": \"edo.orders\",\n            \"DetailType\": \"OrderStatusChanged\",\n            \"Detail\": {\n              \"order_id.$\": \"$.order_id\",\n              \"tenant_id.$\": \"$.tenant_id\",\n              \"status\": \"PACKAGED\",\n              \"timestamp.$\": \"$$.State.EnteredTime\"\n            },\n            \"EventBusName\": \"default\"\n          }\n        ]\n      },\n      \"ResultPath\": \"$.eventResult\",\n      \"Next\": \"WaitDelivery\"\n    },\n    \"WaitDelivery\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"arn:aws:states:::lambda:invoke.waitForTaskToken\",\n      \"Parameters\": {\n        \"FunctionName\": \"${740b11b13d4336efcceda9b0e721f979}\",\n        \"Payload\": {\n          \"order_id.$\": \"$.order_id\",\n          \"tenant_id.$\": \"$.tenant_id\",\n          \"status\": \"WAITING_DELIVERY\",\n          \"task_token.$\": \"$$.Task.Token\",\n          \"message\": \"Pedido listo para entrega\"\n        }\n      },\n      \"ResultPath\": \"$.deliveryResult\",\n      \"TimeoutSeconds\": 7200,\n      \"Next\": \"EmitDelivered\"\n    },\n    \"EmitDelivered\": {\n      \"Type\": \"Task\",\n      \"Resource\": \"arn:aws:states:::events:putEvents\",\n      \"Parameters\": {\n        \"Entries\": [\n          {\n            \"Source\": \"edo.orders\",\n            \"DetailType\": \"OrderStatusChanged\",\n            \"Detail\": {\n              \"order_id.$\": \"$.order_id\",\n              \"tenant_id.$\": \"$.tenant_id\",\n              \"status\": \"DELIVERED\",\n              \"timestamp.$\": \"$$.State.EnteredTime\"\n            },\n            \"EventBusName\": \"default\"\n          }\n        ]\n      },\n      \"ResultPath\": \"$.eventResult\",\n      \"Next\": \"Success\"\n    },\n    \"Success\": {\n      \"Type\": \"Succeed\"\n    }\n  }\n}",
+            {
+              "740b11b13d4336efcceda9b0e721f979": {
+                "Fn::GetAtt": [
+                  "NotifyStaffLambdaFunction",
+                  "Arn"
+                ]
+              }
+            }
+          ]
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "EdoOrderWorkflowDashdevRole",
+            "Arn"
+          ]
+        },
+        "StateMachineName": "EdoOrderWorkflow-dev"
+      },
+      "DependsOn": [
+        "EdoOrderWorkflowDashdevRole"
+      ]
+    },
+    "ApiGatewayRestApi": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "Name": "dev-edo-sushi-bar",
+        "EndpointConfiguration": {
+          "Types": [
+            "EDGE"
+          ]
+        },
+        "Policy": ""
+      }
+    },
+    "ApiGatewayResourceAuth": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "ApiGatewayRestApi",
+            "RootResourceId"
+          ]
+        },
+        "PathPart": "auth",
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayResourceAuthLogin": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Ref": "ApiGatewayResourceAuth"
+        },
+        "PathPart": "login",
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayResourceOrders": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "ApiGatewayRestApi",
+            "RootResourceId"
+          ]
+        },
+        "PathPart": "orders",
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayResourceOrdersAdvance": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Ref": "ApiGatewayResourceOrders"
+        },
+        "PathPart": "advance",
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayMethodAuthLoginOptions": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true
+            },
+            "ResponseModels": {}
+          }
+        ],
+        "RequestParameters": {},
+        "Integration": {
+          "Type": "MOCK",
+          "RequestTemplates": {
+            "application/json": "{statusCode:200}"
+          },
+          "ContentHandling": "CONVERT_TO_TEXT",
+          "IntegrationResponses": [
+            {
+              "StatusCode": "200",
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+              },
+              "ResponseTemplates": {
+                "application/json": ""
+              }
+            }
+          ]
+        },
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceAuthLogin"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayMethodOrdersOptions": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true
+            },
+            "ResponseModels": {}
+          }
+        ],
+        "RequestParameters": {},
+        "Integration": {
+          "Type": "MOCK",
+          "RequestTemplates": {
+            "application/json": "{statusCode:200}"
+          },
+          "ContentHandling": "CONVERT_TO_TEXT",
+          "IntegrationResponses": [
+            {
+              "StatusCode": "200",
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,POST'"
+              },
+              "ResponseTemplates": {
+                "application/json": ""
+              }
+            }
+          ]
+        },
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceOrders"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayMethodOrdersAdvanceOptions": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true
+            },
+            "ResponseModels": {}
+          }
+        ],
+        "RequestParameters": {},
+        "Integration": {
+          "Type": "MOCK",
+          "RequestTemplates": {
+            "application/json": "{statusCode:200}"
+          },
+          "ContentHandling": "CONVERT_TO_TEXT",
+          "IntegrationResponses": [
+            {
+              "StatusCode": "200",
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+              },
+              "ResponseTemplates": {
+                "application/json": ""
+              }
+            }
+          ]
+        },
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceOrdersAdvance"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayMethodAuthLoginPost": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "POST",
+        "RequestParameters": {},
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceAuthLogin"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "AuthLoginLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "MethodResponses": []
+      },
+      "DependsOn": [
+        "AuthLoginLambdaPermissionApiGateway"
+      ]
+    },
+    "ApiGatewayMethodOrdersPost": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "POST",
+        "RequestParameters": {},
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceOrders"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "CreateOrderLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "MethodResponses": []
+      },
+      "DependsOn": [
+        "CreateOrderLambdaPermissionApiGateway"
+      ]
+    },
+    "ApiGatewayMethodOrdersGet": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "GET",
+        "RequestParameters": {},
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceOrders"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "GetOrdersLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "MethodResponses": []
+      },
+      "DependsOn": [
+        "GetOrdersLambdaPermissionApiGateway"
+      ]
+    },
+    "ApiGatewayMethodOrdersAdvancePost": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "POST",
+        "RequestParameters": {},
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceOrdersAdvance"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "UpdateOrderStepLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "MethodResponses": []
+      },
+      "DependsOn": [
+        "UpdateOrderStepLambdaPermissionApiGateway"
+      ]
+    },
+    "ApiGatewayDeployment1763788685440": {
+      "Type": "AWS::ApiGateway::Deployment",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "StageName": "dev"
+      },
+      "DependsOn": [
+        "ApiGatewayMethodAuthLoginOptions",
+        "ApiGatewayMethodOrdersOptions",
+        "ApiGatewayMethodOrdersAdvanceOptions",
+        "ApiGatewayMethodAuthLoginPost",
+        "ApiGatewayMethodOrdersPost",
+        "ApiGatewayMethodOrdersGet",
+        "ApiGatewayMethodOrdersAdvancePost"
+      ]
+    },
+    "AuthLoginLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "AuthLoginLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      }
+    },
+    "CreateOrderLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "CreateOrderLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      }
+    },
+    "GetOrdersLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "GetOrdersLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      }
+    },
+    "UpdateOrderStepLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "UpdateOrderStepLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      }
+    },
+    "EdosushibardevnotifyStaffrule1EventBridgeRule": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "EventPattern": {
+          "source": [
+            "edo.orders"
+          ],
+          "detail-type": [
+            "OrderStatusChanged"
+          ]
+        },
+        "Name": "edo-sushi-bar-dev-notifyStaff-rule-1",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "NotifyStaffLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Id": "edo-sushi-bar-dev-notifyStaff-rule-1-target"
+          }
+        ]
+      }
+    },
+    "NotifyStaffEventBridgeLambdaPermission1": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "NotifyStaffLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            ":",
+            [
+              "arn",
+              {
+                "Ref": "AWS::Partition"
+              },
+              "events",
+              {
+                "Ref": "AWS::Region"
+              },
+              {
+                "Ref": "AWS::AccountId"
+              },
+              {
+                "Fn::Join": [
+                  "/",
+                  [
+                    "rule",
+                    "default",
+                    "edo-sushi-bar-dev-notifyStaff-rule-1"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    },
+    "EdoUsersTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "TableName": "edo-sushi-bar-users-dev",
+        "BillingMode": "PAY_PER_REQUEST",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "email",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "email",
+            "KeyType": "HASH"
+          }
+        ],
+        "StreamSpecification": {
+          "StreamViewType": "NEW_AND_OLD_IMAGES"
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "Project",
+            "Value": "EdoSushiBar"
+          }
+        ]
+      }
+    },
+    "EdoOrdersTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "TableName": "edo-sushi-bar-orders-dev",
+        "BillingMode": "PAY_PER_REQUEST",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "tenant_id",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "order_id",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "status",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "created_at",
+            "AttributeType": "N"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "tenant_id",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "order_id",
+            "KeyType": "RANGE"
+          }
+        ],
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexName": "StatusIndex",
+            "KeySchema": [
+              {
+                "AttributeName": "tenant_id",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "status",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+          },
+          {
+            "IndexName": "DateIndex",
+            "KeySchema": [
+              {
+                "AttributeName": "tenant_id",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "created_at",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+          }
+        ],
+        "StreamSpecification": {
+          "StreamViewType": "NEW_AND_OLD_IMAGES"
+        },
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "Project",
+            "Value": "EdoSushiBar"
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "ServerlessDeploymentBucketName": {
+      "Value": {
+        "Ref": "ServerlessDeploymentBucket"
+      },
+      "Export": {
+        "Name": "sls-edo-sushi-bar-dev-ServerlessDeploymentBucketName"
+      }
+    },
+    "AuthLoginLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "AuthLoginLambdaVersionkF0dbkudhSYHRL2KIbfYv7FJmWEhfZtQRdovmew6Q"
+      },
+      "Export": {
+        "Name": "sls-edo-sushi-bar-dev-AuthLoginLambdaFunctionQualifiedArn"
+      }
+    },
+    "CreateOrderLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "CreateOrderLambdaVersionIyBY8qmbzwX6ikvBZwUDpU3UZ8hIelGeZf9ivrVlY"
+      },
+      "Export": {
+        "Name": "sls-edo-sushi-bar-dev-CreateOrderLambdaFunctionQualifiedArn"
+      }
+    },
+    "GetOrdersLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "GetOrdersLambdaVersionqRVeHHpr2DUbrARHHZHdNTLZ7GBniKLWpaMO71Qg"
+      },
+      "Export": {
+        "Name": "sls-edo-sushi-bar-dev-GetOrdersLambdaFunctionQualifiedArn"
+      }
+    },
+    "UpdateOrderStepLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "UpdateOrderStepLambdaVersionRJmr3jQ8ivgM8ijbijblMexIBIIqMgz62tl50i3BsyY"
+      },
+      "Export": {
+        "Name": "sls-edo-sushi-bar-dev-UpdateOrderStepLambdaFunctionQualifiedArn"
+      }
+    },
+    "NotifyStaffLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "NotifyStaffLambdaVersione6Env0WzHcmi40wbnb0rOSbbJ8A2wC46elXxByKRGIY"
+      },
+      "Export": {
+        "Name": "sls-edo-sushi-bar-dev-NotifyStaffLambdaFunctionQualifiedArn"
+      }
+    },
+    "EdoOrderWorkflowDashdevArn": {
+      "Description": "Current StateMachine Arn",
+      "Value": {
+        "Ref": "EdoOrderWorkflowDashdev"
+      },
+      "Export": {
+        "Name": "sls-edo-sushi-bar-dev-EdoOrderWorkflowDashdevArn"
+      }
+    },
+    "ServiceEndpoint": {
+      "Description": "URL of the service endpoint",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "ApiGatewayRestApi"
+            },
+            ".execute-api.",
+            {
+              "Ref": "AWS::Region"
+            },
+            ".",
+            {
+              "Ref": "AWS::URLSuffix"
+            },
+            "/dev"
+          ]
+        ]
+      },
+      "Export": {
+        "Name": "sls-edo-sushi-bar-dev-ServiceEndpoint"
+      }
+    },
+    "UsersTableName": {
+      "Description": "Nombre de la tabla de usuarios",
+      "Value": {
+        "Ref": "EdoUsersTable"
+      },
+      "Export": {
+        "Name": "edo-sushi-bar-dev-UsersTableName"
+      }
+    },
+    "OrdersTableName": {
+      "Description": "Nombre de la tabla de pedidos",
+      "Value": {
+        "Ref": "EdoOrdersTable"
+      },
+      "Export": {
+        "Name": "edo-sushi-bar-dev-OrdersTableName"
+      }
+    },
+    "EventBusName": {
+      "Description": "Nombre del Event Bus (usando default)",
+      "Value": "default",
+      "Export": {
+        "Name": "edo-sushi-bar-dev-EventBusName"
+      }
+    },
+    "EventBusArn": {
+      "Description": "ARN del Event Bus (default)",
+      "Value": {
+        "Fn::Sub": "arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/default"
+      },
+      "Export": {
+        "Name": "edo-sushi-bar-dev-EventBusArn"
+      }
+    },
+    "EdoOrderWorkflowArn": {
+      "Description": "ARN del Step Function",
+      "Value": {
+        "Fn::Sub": "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:EdoOrderWorkflow-dev"
+      },
+      "Export": {
+        "Name": "edo-sushi-bar-dev-StateMachineArn"
+      }
+    },
+    "ApiEndpoint": {
+      "Description": "API Gateway endpoint URL",
+      "Value": {
+        "Fn::Sub": "https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/dev"
+      }
+    }
+  }
+}
