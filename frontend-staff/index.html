@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edo Staff Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        /* Auth Screens */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .auth-box {
+            background: #1a1a1a;
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .auth-box h1 {
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #cccccc;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: #0a0a0a;
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #666;
+        }
+
+        .form-group select option {
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #e0e0e0;
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            color: #888;
+            font-size: 14px;
+        }
+
+        .auth-switch a {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: none;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .dashboard.active {
+            display: block;
+        }
+
+        .header {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #333;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .role-badge {
+            background: #ffffff;
+            color: #000000;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            background: transparent;
+            color: #ffffff;
+            border: 1px solid #333;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .btn-logout:hover {
+            border-color: #666;
+        }
+
+        /* Orders Board */
+        .orders-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .order-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        .order-id {
+            font-size: 12px;
+            color: #888;
+            font-family: monospace;
+        }
+
+        .order-status {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-CONFIRMADO {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .status-EN_PREPARACION {
+            background: #ff9800;
+            color: #000;
+        }
+
+        .status-LISTO_PARA_RETIRAR {
+            background: #4caf50;
+            color: #fff;
+        }
+
+        .status-EN_CAMINO {
+            background: #2196f3;
+            color: #fff;
+        }
+
+        .order-details {
+            margin-bottom: 15px;
+        }
+
+        .order-details p {
+            margin: 8px 0;
+            color: #cccccc;
+            font-size: 14px;
+        }
+
+        .order-details strong {
+            color: #ffffff;
+        }
+
+        .delivery-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .delivery-DELIVERY {
+            background: #2196f3;
+            color: #fff;
+        }
+
+        .delivery-PICKUP {
+            background: #9c27b0;
+            color: #fff;
+        }
+
+        .order-items {
+            background: #0a0a0a;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .order-items h4 {
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .order-items ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .order-items li {
+            padding: 4px 0;
+            color: #cccccc;
+            font-size: 13px;
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-kitchen {
+            background: #ff9800;
+            color: #000;
+        }
+
+        .btn-packing {
+            background: #4caf50;
+            color: #fff;
+        }
+
+        .btn-delivery {
+            background: #2196f3;
+            color: #fff;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+            font-size: 14px;
+        }
+
+        .error-message {
+            background: #dc3545;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: #888;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .tab-btn.active {
+            color: #fff;
+            border-bottom: 2px solid #fff;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 14px;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="auth-container">
+        <div class="auth-box">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <img src="https://www.edosushibar.com/assets/img/logo-vertical.webp" alt="Edo Sushi Bar"
+                    style="height: 100px; width: auto;">
+            </div>
+            <div id="loginError" class="error-message" style="display: none;"></div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="tu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-primary">Iniciar Sesión</button>
+            </form>
+            <div class="auth-switch">
+                ¿No tienes cuenta? <a href="#" onclick="showRegister(); return false;">Regístrate</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Screen -->
+    <div id="registerScreen" class="auth-container" style="display: none;">
+        <div class="auth-box">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <img src="https://www.edosushibar.com/assets/img/logo-vertical.webp" alt="Edo Sushi Bar"
+                    style="height: 100px; width: auto;">
+            </div>
+            <div id="registerError" class="error-message" style="display: none;"></div>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="registerName" placeholder="Juan Pérez" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="registerEmail" placeholder="tu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="registerPassword" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label>Ocupación</label>
+                    <select id="registerRole" required>
+                        <option value="">Selecciona tu rol</option>
+                        <option value="ADMIN">Administrador</option>
+                        <option value="COCINERO">Cocinero</option>
+                        <option value="DESPACHADOR">Despachador</option>
+                        <option value="REPARTIDOR">Repartidor</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">Registrarse</button>
+            </form>
+            <div class="auth-switch">
+                ¿Ya tienes cuenta? <a href="#" onclick="showLogin(); return false;">Inicia sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="dashboard">
+        <div class="header">
+            <img src="https://www.edosushibar.com/assets/img/logo-horizontal.webp" alt="Edo Sushi Bar"
+                style="height: 40px; width: auto;">
+            <div class="user-info">
+                <span id="userName"></span>
+                <span id="userRole" class="role-badge"></span>
+                <button class="btn-logout" onclick="logout()">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('board')">📋 Tablero</button>
+            <button class="tab-btn" id="statsTabBtn" onclick="switchTab('stats')" style="display: none;">📊
+                Estadísticas</button>
+            <button class="tab-btn" id="historyTabBtn" onclick="switchTab('history')" style="display: none;">🕐 Mi
+                Historial</button>
+        </div>
+
+        <!-- Board View -->
+        <div id="boardView">
+            <!-- Admin Stats (shown only for admin) -->
+            <div id="adminStats" style="display: none; margin-bottom: 30px;">
+                <h2 style="color: #fff; margin-bottom: 20px; font-size: 20px;">📊 Estadísticas</h2>
+                <div class="stats-grid" id="statsGridMain">
+                    <!-- Stats will be injected here -->
+                </div>
+            </div>
+
+            <div id="adminControls" style="display: none; text-align: right; margin-bottom: 20px;">
+                <label style="color: #ccc; font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="showAllOrders" onchange="loadOrders()"> Ver todos los pedidos
+                </label>
+            </div>
+            <h2 style="color: #fff; margin-bottom: 20px; font-size: 20px;">📋 Pedidos Activos</h2>
+            <div id="ordersContainer" class="orders-board">
+                <div class="loading">Cargando pedidos...</div>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div id="pagination-controls" style="display: flex; justify-content: center; margin-top: 30px; gap: 10px;">
+                <!-- Pagination buttons injected here -->
+            </div>
+        </div>
+
+        <!-- Statistics View (Admin) -->
+        <div id="statsView" style="display: none;">
+            <div class="stats-grid" id="statsGrid">
+                <!-- Stats will be injected here -->
+            </div>
+        </div>
+
+        <!-- History View (Staff) -->
+        <div id="historyView" style="display: none;">
+            <h2 style="color: #fff; margin-bottom: 20px; font-size: 20px;">🕐 Mi Historial</h2>
+            <div class="filters" style="margin-bottom: 20px;">
+                <select id="historyFilterType" onchange="renderHistory()"
+                    style="padding: 10px; background: #0a0a0a; color: #fff; border: 1px solid #333; border-radius: 6px;">
+                    <option value="ALL">Todos los tipos</option>
+                    <option value="DELIVERY">Delivery</option>
+                    <option value="PICKUP">Recojo</option>
+                </select>
+                <input type="date" id="historyFilterDate" onchange="renderHistory()"
+                    style="padding: 10px; background: #0a0a0a; color: #fff; border: 1px solid #333; border-radius: 6px;">
+            </div>
+            <div id="historyContainer" class="orders-board">
+                <!-- History will be injected here -->
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        // ⚙️ CONFIGURACIÓN
+        const API_URL = 'https://xrz56m3gci.execute-api.us-east-1.amazonaws.com/dev';
+        const AUTH_URL = 'https://n79mgedf2e.execute-api.us-east-1.amazonaws.com/dev';
+
+        let currentUser = null;
+        let pollingInterval = null;
+        let allOrdersCache = [];
+
+        // Show/Hide screens
+        function showLogin() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('registerScreen').style.display = 'none';
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        function showRegister() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('registerScreen').style.display = 'flex';
+            document.getElementById('registerError').style.display = 'none';
+        }
+
+        // Register
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const role = document.getElementById('registerRole').value;
+
+            try {
+                const response = await fetch(`${AUTH_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password, role })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Registro exitoso. Ahora puedes iniciar sesión.');
+                    showLogin();
+                } else {
+                    document.getElementById('registerError').textContent = data.error || 'Error al registrarse';
+                    document.getElementById('registerError').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('registerError').textContent = 'Error de conexión';
+                document.getElementById('registerError').style.display = 'block';
+            }
+        });
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch(`${AUTH_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentUser = data.user;
+                    localStorage.setItem('edoUser', JSON.stringify(currentUser));
+                    showDashboard();
+                } else {
+                    document.getElementById('loginError').textContent = data.error || 'Error al iniciar sesión';
+                    document.getElementById('loginError').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('loginError').textContent = 'Error de conexión';
+                document.getElementById('loginError').style.display = 'block';
+            }
+        });
+
+        // Show Dashboard
+        function showDashboard() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('registerScreen').style.display = 'none';
+            document.getElementById('dashboard').classList.add('active');
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('userRole').textContent = currentUser.role;
+
+            // Show admin controls and stats if admin
+            if (currentUser.role === 'ADMIN') {
+                document.getElementById('adminControls').style.display = 'block';
+                document.getElementById('adminStats').style.display = 'block';
+                document.getElementById('statsTabBtn').style.display = 'none'; // Hide stats tab, show inline
+            } else {
+                document.getElementById('adminControls').style.display = 'none';
+                document.getElementById('adminStats').style.display = 'none';
+                document.getElementById('statsTabBtn').style.display = 'none';
+                document.getElementById('historyTabBtn').style.display = 'block';
+            }
+
+            loadOrders();
+            pollingInterval = setInterval(loadOrders, 5000);
+        }
+
+        // Tab Switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('boardView').style.display = 'none';
+            document.getElementById('statsView').style.display = 'none';
+            document.getElementById('historyView').style.display = 'none';
+
+            if (tabName === 'board') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('boardView').style.display = 'block';
+            } else if (tabName === 'stats') {
+                document.getElementById('statsTabBtn').classList.add('active');
+                document.getElementById('statsView').style.display = 'block';
+                renderStatistics(allOrdersCache, 'statsGrid');
+            } else if (tabName === 'history') {
+                document.getElementById('historyTabBtn').classList.add('active');
+                document.getElementById('historyView').style.display = 'block';
+                renderHistory();
+            }
+        }
+
+        // Load orders
+        async function loadOrders() {
+            try {
+                const response = await fetch(`${API_URL}/orders`);
+                const ordersData = await response.json();
+                allOrdersCache = ordersData;
+
+                const filteredOrders = filterOrdersByRole(ordersData);
+                // Only reset page if filter changed or first load, but for simplicity we can keep current page if valid
+                // or reset to 1 to show newest/relevant items. Let's reset to 1 for now on refresh to avoid confusion.
+                // Actually, if auto-refreshing, we might want to keep the page. 
+                // But since we don't track "isRefresh", let's just render.
+                // renderOrders handles "currentPage" validation.
+                renderOrders(filteredOrders);
+
+                // Update admin stats if visible
+                if (document.getElementById('adminStats').style.display === 'block') {
+                    renderStatistics(ordersData, 'statsGridMain');
+                }
+
+                // Update active view if needed
+                if (document.getElementById('statsView').style.display === 'block') {
+                    renderStatistics(ordersData, 'statsGrid');
+                }
+                if (document.getElementById('historyView').style.display === 'block') {
+                    renderHistory();
+                }
+            } catch (error) {
+                console.error('Error cargando pedidos:', error);
+            }
+        }
+
+        // Filter orders by role
+        function filterOrdersByRole(orders) {
+            const role = currentUser.role;
+            const showAll = document.getElementById('showAllOrders').checked;
+
+            switch (role) {
+                case 'ADMIN':
+                    if (showAll) return orders;
+                    return orders.filter(o => o.status === 'CONFIRMADO');
+                case 'COCINERO':
+                    return orders.filter(o => o.status === 'EN_PREPARACION');
+                case 'DESPACHADOR':
+                    return orders.filter(o => o.status === 'LISTO_PARA_RETIRAR');
+                case 'REPARTIDOR':
+                    return orders.filter(o => o.status === 'EN_CAMINO');
+                default:
+                    return [];
+            }
+        }
+
+        // Pagination State
+        let currentPage = 1;
+        const itemsPerPage = 9;
+
+        // Render orders
+        function renderOrders(orders) {
+            const container = document.getElementById('ordersContainer');
+
+            if (orders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>✅ No hay pedidos pendientes</h3>
+                        <p>Todos los pedidos están al día</p>
+                    </div>
+                `;
+                document.getElementById('pagination-controls').innerHTML = '';
+                return;
+            }
+
+            // Calculate pagination
+            const totalPages = Math.ceil(orders.length / itemsPerPage);
+
+            // Ensure current page is valid
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedOrders = orders.slice(startIndex, endIndex);
+
+            container.innerHTML = paginatedOrders.map(order => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <span class="order-id">#${order.orderId.substring(0, 8)}</span>
+                        <span class="order-status status-${order.status}">${order.status}</span>
+                    </div>
+                    <div class="order-details">
+                        <p><strong>Cliente:</strong> ${order.customer.name}</p>
+                        <p><strong>Total:</strong> S/ ${order.total}
+                            <span class="delivery-badge delivery-${order.deliveryType}">${order.deliveryType}</span>
+                        </p>
+                        ${order.deliveryType === 'DELIVERY' ? `<p><strong>Dirección:</strong> ${order.customer.address}</p>` : `<p><strong>Recojo en:</strong> ${order.customer.address || 'Local principal'}</p>`}
+                    </div>
+                    <div class="order-items">
+                        <h4>Items:</h4>
+                        <ul>
+                            ${order.items.map(item => `<li>• ${item.product.name} - S/ ${item.product.price}</li>`).join('')}
+                        </ul>
+                    </div>
+
+                    <!-- Timeline Section -->
+                    <div class="order-timeline" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #333; font-size: 12px;">
+                        <h4 style="color: #888; margin-bottom: 5px;">Historial:</h4>
+                        ${(order.timeline || []).map(event => `
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #ccc;">
+                                <span>${event.action} (${event.user})</span>
+                                <span style="color: #666;">${new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                        `).join('')}
+                        ${(!order.timeline || order.timeline.length === 0) ? '<div style="color: #666;">Sin historial registrado</div>' : ''}
+                    </div>
+
+                    ${getActionButton(order)}
+                </div>
+            `).join('');
+
+            renderPaginationControls(totalPages, orders);
+        }
+
+        function renderPaginationControls(totalPages, allFilteredOrders) {
+            const container = document.getElementById('pagination-controls');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            // Prev Button
+            const prevBtn = document.createElement('button');
+            prevBtn.innerText = '← Anterior';
+            prevBtn.style.cssText = `
+                background: #1a1a1a; 
+                color: #fff; 
+                border: 1px solid #333; 
+                padding: 8px 16px; 
+                border-radius: 6px; 
+                cursor: pointer;
+                opacity: ${currentPage === 1 ? '0.5' : '1'};
+                pointer-events: ${currentPage === 1 ? 'none' : 'auto'};
+            `;
+            prevBtn.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderOrders(allFilteredOrders);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            };
+            container.appendChild(prevBtn);
+
+            // Page Info
+            const pageInfo = document.createElement('span');
+            pageInfo.innerText = `Página ${currentPage} de ${totalPages}`;
+            pageInfo.style.cssText = 'color: #888; align-self: center; font-size: 14px;';
+            container.appendChild(pageInfo);
+
+            // Next Button
+            const nextBtn = document.createElement('button');
+            nextBtn.innerText = 'Siguiente →';
+            nextBtn.style.cssText = `
+                background: #1a1a1a; 
+                color: #fff; 
+                border: 1px solid #333; 
+                padding: 8px 16px; 
+                border-radius: 6px; 
+                cursor: pointer;
+                opacity: ${currentPage === totalPages ? '0.5' : '1'};
+                pointer-events: ${currentPage === totalPages ? 'none' : 'auto'};
+            `;
+            nextBtn.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderOrders(allFilteredOrders);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            };
+            container.appendChild(nextBtn);
+        }
+
+        // Get action button
+        function getActionButton(order) {
+            const role = currentUser.role;
+
+            // ADMIN: Solo puede enviar a cocina (iniciar el flujo)
+            if (role === 'ADMIN' && order.status === 'CONFIRMADO') {
+                return `<button class="btn-action btn-kitchen" onclick="advanceOrder('${order.orderId}', 'kitchen')">🍳 Enviar a Cocina</button>`;
+            }
+
+            // COCINERO: Solo ve lo que está en preparación y lo manda a empaquetado
+            if (role === 'COCINERO' && order.status === 'EN_PREPARACION') {
+                return `<button class="btn-action btn-packing" onclick="advanceOrder('${order.orderId}', 'packing')">📦 Platillo Terminado (A Empaquetado)</button>`;
+            }
+
+            // DESPACHADOR: Ve lo que está listo para retirar/empacar
+            if (role === 'DESPACHADOR' && order.status === 'LISTO_PARA_RETIRAR') {
+                if (order.deliveryType === 'DELIVERY') {
+                    return `<button class="btn-action btn-delivery" onclick="advanceOrder('${order.orderId}', 'delivery')">🏍️ Asignar a Motorizado</button>`;
+                } else {
+                    return `<button class="btn-action btn-packing" onclick="markAsCompleted('${order.orderId}')">✅ Entregado al Cliente</button>`;
+                }
+            }
+
+            // REPARTIDOR: Solo ve lo que está en camino
+            if (role === 'REPARTIDOR' && order.status === 'EN_CAMINO') {
+                return `<button class="btn-action btn-packing" onclick="markAsCompleted('${order.orderId}')">✅ Confirmar Entrega</button>`;
+            }
+
+            return '';
+        }
+
+        // Advance order
+        async function advanceOrder(orderId, endpoint) {
+            try {
+                const response = await fetch(`${API_URL}/orders/${orderId}/${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user: {
+                            name: currentUser.name,
+                            email: currentUser.email
+                        }
+                    })
+                });
+
+                if (response.ok) {
+                    loadOrders();
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.error);
+                }
+            } catch (error) {
+                alert('Error de conexión: ' + error.message);
+            }
+        }
+
+        // Mark as completed
+        async function markAsCompleted(orderId) {
+            try {
+                const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status: 'ENTREGADO',
+                        user: {
+                            name: currentUser.name,
+                            email: currentUser.email
+                        }
+                    })
+                });
+
+                if (response.ok) {
+                    loadOrders();
+                } else {
+                    alert('Error al completar pedido');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Render Statistics
+        function renderStatistics(orders, targetId = 'statsGrid') {
+            const stats = {
+                total: orders.length,
+                confirmed: orders.filter(o => o.status === 'CONFIRMADO').length,
+                preparing: orders.filter(o => o.status === 'EN_PREPARACION').length,
+                ready: orders.filter(o => o.status === 'LISTO_PARA_RETIRAR').length,
+                delivery: orders.filter(o => o.status === 'EN_CAMINO').length,
+                completed: orders.filter(o => o.status === 'ENTREGADO').length,
+                revenue: orders.reduce((sum, o) => sum + parseFloat(o.total || 0), 0)
+            };
+
+            document.getElementById(targetId).innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${stats.total}</div>
+                    <div class="stat-label">Total Pedidos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: #ffc107">${stats.confirmed}</div>
+                    <div class="stat-label">Pendientes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: #ff9800">${stats.preparing}</div>
+                    <div class="stat-label">En Cocina</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: #2196f3">${stats.delivery}</div>
+                    <div class="stat-label">En Camino</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: #4caf50">${stats.completed}</div>
+                    <div class="stat-label">Completados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">S/ ${stats.revenue.toFixed(2)}</div>
+                    <div class="stat-label">Ingresos Totales</div>
+                </div>
+            `;
+        }
+
+        // Render History
+        function renderHistory() {
+            const typeFilter = document.getElementById('historyFilterType').value;
+            const dateFilter = document.getElementById('historyFilterDate').value;
+
+            const myOrders = allOrdersCache.filter(order => {
+                // Check if current user is in timeline
+                const timeline = order.timeline || [];
+                const participated = timeline.some(event => event.user === currentUser.name);
+
+                // Also check if user is the one who created it (if admin/staff created it manually?) 
+                // For now rely on timeline.
+
+                if (!participated) return false;
+
+                // Apply filters
+                if (typeFilter !== 'ALL' && order.deliveryType !== typeFilter) return false;
+                if (dateFilter) {
+                    const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
+                    if (orderDate !== dateFilter) return false;
+                }
+
+                return true;
+            });
+
+            const container = document.getElementById('historyContainer');
+            if (myOrders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>📜 No tienes historial</h3>
+                        <p>Aún no has procesado pedidos con estos filtros</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Reuse render logic but simpler
+            container.innerHTML = myOrders.map(order => `
+                <div class="order-card">
+                    <div class="order-header">
+                        <span class="order-id">#${order.orderId.substring(0, 8)}</span>
+                        <span class="order-status status-${order.status}">${order.status}</span>
+                    </div>
+                    <div class="order-details">
+                        <p><strong>Cliente:</strong> ${order.customer.name}</p>
+                        <p><strong>Fecha:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
+                        <p><strong>Total:</strong> S/ ${order.total}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('edoUser');
+            clearInterval(pollingInterval);
+            location.reload();
+        }
+
+        // Auto-login
+        window.addEventListener('load', () => {
+            const savedUser = localStorage.getItem('edoUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showDashboard();
+            }
+        });
+    </script>
+</body>
+
+</html>

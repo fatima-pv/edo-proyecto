@@ -1,0 +1,80 @@
+service: edo-orders-service
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+  memorySize: 256
+  timeout: 20
+  iam:
+    role: arn:aws:iam::076456812464:role/LabRole
+  environment:
+    ORDERS_TABLE: EdoOrdersTable
+    ORDER_BUS_NAME: EdoOrderBus
+    NOTIFICATION_QUEUE_URL: https://sqs.us-east-1.amazonaws.com/076456812464/EdoNotificationQueue
+
+functions:
+  createOrder:
+    handler: handler.createOrder
+    events:
+      - http:
+          path: orders
+          method: post
+          cors: true
+
+  listOrders:
+    handler: handler.listOrders
+    events:
+      - http:
+          path: orders
+          method: get
+          cors: true
+
+  getOrder:
+    handler: handler.getOrder
+    events:
+      - http:
+          path: orders/{orderId}
+          method: get
+          cors: true
+
+  updateOrderStatus:
+    handler: handler.updateOrderStatus
+    events:
+      - http:
+          path: orders/{orderId}/status
+          method: put
+          cors: true
+
+  # Funciones para cada estado del workflow
+  processKitchen:
+    handler: handler.processKitchen
+    events:
+      - http:
+          path: orders/{orderId}/kitchen
+          method: post
+          cors: true
+
+  processPacking:
+    handler: handler.processPacking
+    events:
+      - http:
+          path: orders/{orderId}/packing
+          method: post
+          cors: true
+
+  processDelivery:
+    handler: handler.processDelivery
+    events:
+      - http:
+          path: orders/{orderId}/delivery
+          method: post
+          cors: true
+
+resources:
+  Resources:
+    # EventBridge Bus
+    EdoOrderBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        Name: EdoOrderBus

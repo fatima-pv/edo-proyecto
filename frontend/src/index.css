@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #EB5A23;
+  --color-dark: #000000;
+  --color-light: #FFFFFF;
+  --color-dark-gray: #434040;
+  --font-sans: "Ruda", sans-serif;
+}
+
+body {
+  background-color: var(--color-dark);
+  color: var(--color-light);
+  font-family: var(--font-sans);
+}

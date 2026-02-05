@@ -1,0 +1,43 @@
+service: edo-users-service
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+  memorySize: 256
+  timeout: 20
+  iam:
+    role: arn:aws:iam::076456812464:role/LabRole
+  environment:
+    USERS_TABLE: EdoUsersTable
+
+functions:
+  registerUser:
+    handler: handler.registerUser
+    events:
+      - http:
+          path: auth/register
+          method: post
+          cors: true
+
+  loginUser:
+    handler: handler.loginUser
+    events:
+      - http:
+          path: auth/login
+          method: post
+          cors: true
+
+resources:
+  Resources:
+    EdoUsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: EdoUsersTable
+        AttributeDefinitions:
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: email
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST

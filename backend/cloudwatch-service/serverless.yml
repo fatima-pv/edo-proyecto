@@ -1,0 +1,138 @@
+service: edo-cloudwatch-dashboard
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+  iam:
+    role: arn:aws:iam::076456812464:role/LabRole
+
+resources:
+  Resources:
+    EdoSushiDashboard:
+      Type: AWS::CloudWatch::Dashboard
+      Properties:
+        DashboardName: EdoSushiBar-Dashboard
+        DashboardBody: |
+          {
+            "widgets": [
+              {
+                "type": "metric",
+                "properties": {
+                  "metrics": [
+                    ["AWS/Lambda", "Invocations", {"stat": "Sum", "label": "Total Invocaciones"}]
+                  ],
+                  "period": 300,
+                  "stat": "Sum",
+                  "region": "us-east-1",
+                  "title": "Lambda - Total Invocaciones",
+                  "yAxis": {
+                    "left": {
+                      "label": "Count"
+                    }
+                  }
+                }
+              },
+              {
+                "type": "metric",
+                "properties": {
+                  "metrics": [
+                    ["AWS/Lambda", "Errors", {"stat": "Sum", "label": "Errores", "color": "#d62728"}],
+                    [".", "Throttles", {"stat": "Sum", "label": "Throttles", "color": "#ff7f0e"}]
+                  ],
+                  "period": 300,
+                  "stat": "Sum",
+                  "region": "us-east-1",
+                  "title": "Lambda - Errores y Throttles",
+                  "yAxis": {
+                    "left": {
+                      "label": "Count"
+                    }
+                  }
+                }
+              },
+              {
+                "type": "metric",
+                "properties": {
+                  "metrics": [
+                    ["AWS/Lambda", "Duration", {"stat": "Average", "label": "Promedio"}],
+                    ["...", {"stat": "Maximum", "label": "Máximo"}]
+                  ],
+                  "period": 300,
+                  "stat": "Average",
+                  "region": "us-east-1",
+                  "title": "Lambda - Duración (ms)",
+                  "yAxis": {
+                    "left": {
+                      "label": "Milliseconds"
+                    }
+                  }
+                }
+              },
+              {
+                "type": "metric",
+                "properties": {
+                  "metrics": [
+                    ["AWS/DynamoDB", "ConsumedReadCapacityUnits", {"stat": "Sum"}],
+                    [".", "ConsumedWriteCapacityUnits", {"stat": "Sum"}]
+                  ],
+                  "period": 300,
+                  "stat": "Sum",
+                  "region": "us-east-1",
+                  "title": "DynamoDB - Capacidad Consumida"
+                }
+              },
+              {
+                "type": "metric",
+                "properties": {
+                  "metrics": [
+                    ["AWS/ApiGateway", "Count", {"stat": "Sum", "label": "Total Requests"}],
+                    [".", "4XXError", {"stat": "Sum", "label": "4XX Errors", "color": "#ff7f0e"}],
+                    [".", "5XXError", {"stat": "Sum", "label": "5XX Errors", "color": "#d62728"}]
+                  ],
+                  "period": 300,
+                  "stat": "Sum",
+                  "region": "us-east-1",
+                  "title": "API Gateway - Requests y Errores"
+                }
+              },
+              {
+                "type": "metric",
+                "properties": {
+                  "metrics": [
+                    ["AWS/ApiGateway", "Latency", {"stat": "Average", "label": "Latencia Promedio"}],
+                    ["...", {"stat": "p99", "label": "Latencia p99"}]
+                  ],
+                  "period": 300,
+                  "stat": "Average",
+                  "region": "us-east-1",
+                  "title": "API Gateway - Latencia (ms)",
+                  "yAxis": {
+                    "left": {
+                      "label": "Milliseconds"
+                    }
+                  }
+                }
+              },
+              {
+                "type": "log",
+                "properties": {
+                  "query": "SOURCE '/aws/lambda/edo-orders-service-dev-createOrder'\n| fields @timestamp, @message\n| filter @message like /Pedido creado/\n| stats count() by bin(5m)",
+                  "region": "us-east-1",
+                  "title": "Pedidos Creados (últimas 3 horas)",
+                  "stacked": false,
+                  "view": "timeSeries"
+                }
+              },
+              {
+                "type": "log",
+                "properties": {
+                  "query": "SOURCE '/aws/lambda/edo-orders-service-dev-updateOrderStatus'\n| fields @timestamp, status\n| stats count() by status",
+                  "region": "us-east-1",
+                  "title": "Estados de Pedidos",
+                  "stacked": false,
+                  "view": "pie"
+                }
+              }
+            ]
+          }
