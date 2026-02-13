@@ -92,6 +92,4 @@ Plataforma de gestión de pedidos para un restaurante de sushi con flujo **end�
 
 ---
 
-## 👤 Autor
 
-Mauricio Alarcón
